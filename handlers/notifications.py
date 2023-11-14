@@ -2,11 +2,13 @@ from aiogram import types, Bot
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime, timedelta
 from models import *
+from aiogram.dispatcher.filters.state import State
 
 
 # напоминание
-async def send_notification(msg: types.Message, text: str):
-    await msg.reply(text)
+async def send_notification(chat_id: int, bot: Bot, text: str, state: State):
+    await bot.send_message(chat_id=chat_id, text=text)
+    await state.set()
 
 
 # ежедневное утреннее приветствие

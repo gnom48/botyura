@@ -19,9 +19,14 @@ dp = Dispatcher(bot, storage=storage)
 # старт регистрации
 @dp.message_handler(commands=['start'], state="*")
 async def start_cmd(msg: types.Message):
-    oldRielter = Rielter.get_by_id(pk=msg.from_user.id)
+    oldRielter: any
+    try:
+        oldRielter = Rielter.get_by_id(pk=msg.from_user.id)
+    except Exception:
+        oldRielter = None
     if oldRielter:
         await msg.answer(f"С возвращением, {oldRielter.fio}!", reply_markup=types.ReplyKeyboardRemove())
+        await msg.answer(f"Чем займемся сейчас?", reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
         return
     await msg.answer("Привет!", reply_markup=get_start_markup())
@@ -100,13 +105,13 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
             Rielter.create(rielter_id=data["rielter_id"], 
                            fio=data["fio"], 
                            birthday=data["birthday"], 
-                           gender=data["gender"], 
+                           gender=data["gender"],
                            rielter_type=data["rielter_type"]).save()
             # TODO: заполнить нулями (а может и не надо - чтобы сохранить статистику)
             Report.create(rielter_id=data["rielter_id"]).save()
     profile = Rielter.get(Rielter.rielter_id == callback.from_user.id)
     # TODO: всрать клавиатуру
-    await bot.send_message(callback.from_user.id, f"Ваш профиль сформирован!\n\nID: {profile.rielter_id},\nФИО: {profile.fio},\nДата рождения: {profile.birthday},\nПол: {profile.gender},\nНаправление работы: {Rielter_type.get_by_id(pk=profile.rielter_type).rielter_type_name}", reply_markup=None)
+    await bot.send_message(callback.from_user.id, f"Ваш профиль сформирован!\n\nID: {profile.rielter_id},\nФИО: {profile.fio},\nДата рождения: {profile.birthday},\nПол: {profile.gender},\nНаправление работы: {Rielter_type.get_by_id(pk=profile.rielter_type).rielter_type_name}", reply_markup=get_inline_menu_markup())
     await WorkStates.ready.set()
 
     # запуск утреннего и вечернего оповещения 
@@ -117,26 +122,82 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
 
 
 # default хэндлер для клавиатуры, которая будет доступна всегда в состоянии ready
-@dp.message_handler(lambda msg: msg.text, state=WorkStates.ready)
-async def start_new_activity(msg: types.Message, state: FSMContext):
-    if msg.text == "Расклейка":
-        msg.answer("Хорошо, я вернусь через час, поитересоваться твоими успехами!")
-
-        scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-        scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(hours=1), kwargs={"msg": msg, "text": "Как твои успехи в расклейке? Прогулялся, отдохнул, готов к работе?"})
-        scheduler.start()
+@dp.callback_query_handler(state=WorkStates.ready)
+async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
+    if callback.data == "analytics":
+        pass
+    elif callback.data == "meeting":
+        pass
+    elif callback.data == "call":
+        await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, я вернусь через час, поитересоваться твоими успехами!")
         
-    elif msg.text == "Прозвон":
+        scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+        scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(hours=1), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": "Как твои успехи в прозвонах? Сколько рабочих звонкоы ты успел совершить?", "state": WorkStates.enter_calls_count})
+        scheduler.start()
+
+        return
+
+    elif callback.data == "show":
         pass
-        # так то можно аналогичные scheduler'ы написать но надо как то оптимизировать
-    elif msg.text == "Показ":
+    elif callback.data == "search":
         pass
-    elif msg.text == "Осмотр":
+    elif callback.data == "flyer":
+        await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, я вернусь через час, поитересоваться твоими успехами!")
+        
+        scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+        scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(hours=1), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": "Как твои успехи в расклейке? Прогулялся, отдохнул, готов к работе? Сколько объявлений ты расклеил?", "state": WorkStates.enter_flyer_count})
+        scheduler.start()
+
+        return
+        
+    elif callback.data == "deal":
+        await callback.message.delete()
+        await bot.send_message(chat_id=callback.from_user.id, text="Давай уточним:", reply_markup=get_inline_meeting_markup())
+        # await WorkStates.smth.set()
+        return
+    
+    elif callback.data == "deposit":
         pass
-    elif msg.text == "Сделка":
+    elif callback.data == "vacation":
+        pass
+    elif callback.data == "sick_leave":
         pass
     else:
-        pass
+        print("О нет, необработанная ситация!")
+
+
+# количество расклеенных листовок
+@dp.message_handler(lambda msg: msg.text, state=WorkStates.enter_flyer_count)
+async def enter_posting_adverts_count(msg: types.Message, state: FSMContext):
+    count: int = 0
+    try:
+        count = int(msg.text)
+    except Exception:
+        await msg.reply("Ошибка, попробуй ввести еще раз!")
+        return
+    await msg.answer("Молодчина!")
+    tmp = Report.get_or_none(Report.rielter_id == msg.from_user.id)
+    if tmp:
+        count += tmp.posting_adverts
+        Report.update(posting_adverts=count).where(Report.rielter_id == msg.from_user.id).execute()
+    await WorkStates.ready.set()
+    
+    
+# количество звонков
+@dp.message_handler(lambda msg: msg.text, state=WorkStates.enter_calls_count)
+async def enter_posting_adverts_count(msg: types.Message, state: FSMContext):
+    count: int = 0
+    try:
+        count = int(msg.text)
+    except Exception:
+        await msg.reply("Ошибка, попробуй ввести еще раз!")
+        return
+    await msg.answer("Просто супер!")
+    tmp = Report.get_or_none(Report.rielter_id == msg.from_user.id)
+    if tmp:
+        count += tmp.cold_calls
+        Report.update(cold_calls=count).where(Report.rielter_id == msg.from_user.id).execute()
+    await WorkStates.ready.set()
 
 
 # TODO: скорее всего надо будет написать команду "запланировать активность"

@@ -25,9 +25,9 @@ class Rielter(BaseModel):
         db_table = "Rielters"
     
     rielter_id = PrimaryKeyField()
-    fio = TextField()
-    birthday = DateField()
-    gender = TextField()
+    fio = TextField(default="")
+    birthday = DateField(default="")
+    gender = TextField(default="")
     rielter_type = ForeignKeyField(Rielter_type)
 
 
@@ -38,25 +38,25 @@ class Report(BaseModel):
 
     rielter_id = ForeignKeyField(Rielter)
 
-    cold_call_count = IntegerField()
-    meet_new_objects = IntegerField()
-    take_in_work = IntegerField()
-    contrects_signed = IntegerField()
-    show_objects = IntegerField()
-    posting_adverts = IntegerField()
-    ready_deposit_count = IntegerField()
-    take_deposit_count = IntegerField()
-    deals_count = IntegerField()
+    cold_call_count = IntegerField(default=0)
+    meet_new_objects = IntegerField(default=0)
+    take_in_work = IntegerField(default=0)
+    contrects_signed = IntegerField(default=0)
+    show_objects = IntegerField(default=0)
+    posting_adverts = IntegerField(default=0)
+    ready_deposit_count = IntegerField(default=0)
+    take_deposit_count = IntegerField(default=0)
+    deals_count = IntegerField(default=0)
     
-    total_cold_call_count = IntegerField()
-    total_meet_new_objects = IntegerField()
-    total_take_in_work = IntegerField()
-    total_contrects_signed = IntegerField()
-    total_show_objects = IntegerField()
-    total_posting_adverts = IntegerField()
-    total_ready_deposit_count = IntegerField()
-    total_take_deposit_count = IntegerField()
-    total_deals_count = IntegerField()
+    total_cold_call_count = IntegerField(default=0)
+    total_meet_new_objects = IntegerField(default=0)
+    total_take_in_work = IntegerField(default=0)
+    total_contrects_signed = IntegerField(default=0)
+    total_show_objects = IntegerField(default=0)
+    total_posting_adverts = IntegerField(default=0)
+    total_ready_deposit_count = IntegerField(default=0)
+    total_take_deposit_count = IntegerField(default=0)
+    total_deals_count = IntegerField(default=0)
 
 
 def create_db():

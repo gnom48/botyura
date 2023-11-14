@@ -32,6 +32,7 @@ def get_realtors_type_kb() -> InlineKeyboardMarkup:
     return inline_kb_realtors_type
 
 
+# главное меню выбора активностей
 def get_inline_menu_markup() -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton("Аналитика", callback_data="analytics"),
@@ -52,6 +53,7 @@ def get_inline_menu_markup() -> InlineKeyboardMarkup:
     return inline_markup
 
 
+# ветка встреча
 def get_inline_meeting_markup() -> InlineKeyboardMarkup:
     buttons = [
         InlineKeyboardButton("Квартира", callback_data="apartment"),
