@@ -7,6 +7,7 @@ def get_start_markup() -> ReplyKeyboardMarkup:
     return start_markup
 
 
+# виды сделок
 def get_meeting_markup() -> ReplyKeyboardMarkup:
     buttons = [
         KeyboardButton("Квартира"),
@@ -17,6 +18,7 @@ def get_meeting_markup() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(*buttons)
 
 
+# как прошла сделка
 def get_meeting_result_markup() -> ReplyKeyboardMarkup:
     buttons = [
         KeyboardButton("Хорошо"),
@@ -27,7 +29,7 @@ def get_meeting_result_markup() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(*buttons)
 
 
-
+# общее состояние риелтора
 def get_meeting_rest_markup() -> ReplyKeyboardMarkup:
     buttons = [
         KeyboardButton("Устал"),

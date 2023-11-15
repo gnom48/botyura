@@ -11,4 +11,7 @@ class WorkStates(StatesGroup):
     enter_flyer_count = State()
     enter_calls_count = State()
 
+    deal_enter_deal_type = State()
+    deal_retult = State()
+
     restart = State()

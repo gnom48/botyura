@@ -9,11 +9,15 @@ from .notifications import *
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime, timedelta
+import asyncio
 
 
 bot = Bot(token=TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
+
+scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+scheduler.start() # TODO: оттестить
 
 
 # старт регистрации
@@ -33,7 +37,7 @@ async def start_cmd(msg: types.Message):
     await WorkStates.restart.set()
 
 
-# подтверждение начала регистрацииовлво
+# подтверждение начала регистрации
 @dp.message_handler(lambda msg: msg.text == "Старт регистрации", state=WorkStates.restart)
 async def send_welcome(msg: types.Message, state: FSMContext):
     async with state.proxy() as data:
@@ -111,7 +115,8 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
             Report.create(rielter_id=data["rielter_id"]).save()
     profile = Rielter.get(Rielter.rielter_id == callback.from_user.id)
     # TODO: всрать клавиатуру
-    await bot.send_message(callback.from_user.id, f"Ваш профиль сформирован!\n\nID: {profile.rielter_id},\nФИО: {profile.fio},\nДата рождения: {profile.birthday},\nПол: {profile.gender},\nНаправление работы: {Rielter_type.get_by_id(pk=profile.rielter_type).rielter_type_name}", reply_markup=get_inline_menu_markup())
+    await bot.send_message(callback.from_user.id, f"Ваш профиль сформирован!\n\nID: {profile.rielter_id},\nФИО: {profile.fio},\nДата рождения: {profile.birthday},\nПол: {profile.gender},\nНаправление работы: {Rielter_type.get_by_id(pk=profile.rielter_type).rielter_type_name}")
+    await bot.send_message(callback.from_user.id, f"В каком направлении будешь работать сейчас?", reply_markup=get_inline_menu_markup())
     await WorkStates.ready.set()
 
     # запуск утреннего и вечернего оповещения 
@@ -130,12 +135,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
         pass
     elif callback.data == "call":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, я вернусь через час, поитересоваться твоими успехами!")
-        
-        scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-        scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(hours=1), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": "Как твои успехи в прозвонах? Сколько рабочих звонкоы ты успел совершить?", "state": WorkStates.enter_calls_count})
-        scheduler.start()
-
-        return
+        scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(hours=1), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": "Как твои успехи в прозвонах? Сколько рабочих звонкоы ты успел совершить?", "state": WorkStates.enter_calls_count, "keyboard": None})
 
     elif callback.data == "show":
         pass
@@ -143,18 +143,11 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
         pass
     elif callback.data == "flyer":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, я вернусь через час, поитересоваться твоими успехами!")
-        
-        scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-        scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(hours=1), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": "Как твои успехи в расклейке? Прогулялся, отдохнул, готов к работе? Сколько объявлений ты расклеил?", "state": WorkStates.enter_flyer_count})
-        scheduler.start()
-
-        return
+        scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(hours=1), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": "Как твои успехи в расклейке? Прогулялся, отдохнул, готов к работе? Сколько объявлений ты расклеил?", "state": WorkStates.enter_flyer_count, "keyboard": None})
         
     elif callback.data == "deal":
-        await callback.message.delete()
-        await bot.send_message(chat_id=callback.from_user.id, text="Давай уточним:", reply_markup=get_inline_meeting_markup())
-        # await WorkStates.smth.set()
-        return
+        await bot.send_message(chat_id=callback.from_user.id, text="Давай уточним:", reply_markup=get_meeting_markup())
+        await WorkStates.deal_enter_deal_type.set()
     
     elif callback.data == "deposit":
         pass
@@ -163,7 +156,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
     elif callback.data == "sick_leave":
         pass
     else:
-        print("О нет, необработанная ситация!")
+        print("О нет, необработанная ситация!\nПросим вас сделать скриншот этой ситуации и направить разработчикам. ")
 
 
 # количество расклеенных листовок
@@ -195,8 +188,28 @@ async def enter_posting_adverts_count(msg: types.Message, state: FSMContext):
     await msg.answer("Просто супер!")
     tmp = Report.get_or_none(Report.rielter_id == msg.from_user.id)
     if tmp:
-        count += tmp.cold_calls
-        Report.update(cold_calls=count).where(Report.rielter_id == msg.from_user.id).execute()
+        count += tmp.cold_call_count
+        Report.update(cold_call_count=count).where(Report.rielter_id == msg.from_user.id).execute()
+    await WorkStates.ready.set()
+
+
+# вид сделки
+@dp.message_handler(lambda msg: msg.text in ["Квартира", "Земля", "Дом", "Назад"], state=WorkStates.deal_enter_deal_type)
+async def enter_deal_type(msg: types.Message, state: FSMContext):
+    if msg.text == "Назад":
+        await msg.answer(text="Отмена!", reply_markup=types.ReplyKeyboardRemove())
+        await msg.answer(text=f"В каком направлении будешь работать сейчас?", reply_markup=get_inline_menu_markup())
+        await WorkStates.ready.set()
+    
+    elif msg.text == "Квартира":
+        pass
+    elif msg.text == "Земля": 
+        pass
+    elif msg.text == "Дом":
+        pass
+    
+    scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=5), kwargs={"chat_id": msg.from_user.id, "bot": bot, "text": f"Как прошла сделка в категории: #{msg.text} ?", "state": WorkStates.deal_retult, "keyboard": get_meeting_result_markup()})
+    await msg.answer(text=f"Отлично! Вернусь через [некоторое время] и спрошу как у тебя дела!", reply_markup=types.ReplyKeyboardRemove())
     await WorkStates.ready.set()
 
 

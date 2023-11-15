@@ -6,8 +6,8 @@ from aiogram.dispatcher.filters.state import State
 
 
 # напоминание
-async def send_notification(chat_id: int, bot: Bot, text: str, state: State):
-    await bot.send_message(chat_id=chat_id, text=text)
+async def send_notification(chat_id: int, bot: Bot, text: str, state: State, keyboard):
+    await bot.send_message(chat_id=chat_id, text=text, reply_markup=keyboard)
     await state.set()
 
 
