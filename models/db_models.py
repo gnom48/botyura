@@ -47,6 +47,7 @@ class Report(BaseModel):
     ready_deposit_count = IntegerField(default=0)
     take_deposit_count = IntegerField(default=0)
     deals_count = IntegerField(default=0)
+    analytics = IntegerField(default=0)
     
     total_cold_call_count = IntegerField(default=0)
     total_meet_new_objects = IntegerField(default=0)
@@ -57,6 +58,7 @@ class Report(BaseModel):
     total_ready_deposit_count = IntegerField(default=0)
     total_take_deposit_count = IntegerField(default=0)
     total_deals_count = IntegerField(default=0)
+    totel_analytics = IntegerField(default=0)
 
 
 def create_db():
