@@ -16,11 +16,6 @@ def get_advice_from_book() -> str:
     return best_tip
 
 
-
-
-import random
-
-
 # Общие мотивационные фразы когда мы просто будем хвалить сотрудника в большинстве случаев
 def generate_motivation_compliment():
     compliments = [
@@ -41,6 +36,7 @@ def generate_motivation_compliment():
         "Ваше упорство и трудолюбие достойны восхищения! Продолжайте двигаться вперед!"
     ]
     return random.choice(compliments)
+
 
 # Фразы для кнопки сделка
 def generate_deal_related_compliment():
@@ -72,6 +68,7 @@ def generate_initiative_compliment():
     ]
     return random.choice(compliments)
 
+
 # Фразы для кнопки показ 
 def generate_property_showing_compliment():
     compliments = [
@@ -86,6 +83,7 @@ def generate_property_showing_compliment():
     ]
     return random.choice(compliments)
 
+
 # Фразы для кнопки встреча
 def generate_client_meeting_compliment():
     compliments = [
@@ -99,7 +97,3 @@ def generate_client_meeting_compliment():
         "Вы создаете доверительную атмосферу на встречах с клиентами - это ваш ключ к успеху."
     ]
     return random.choice(compliments)
-
-
-compliment = generate_deal_related_compliment()
-print(compliment)

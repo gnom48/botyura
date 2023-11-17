@@ -28,7 +28,7 @@ def get_meeting_result_markup() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(*buttons)
 
 
-# общее состояние риелтора
+# общее состояние риелтора - не буду работать
 def get_rest_markup() -> ReplyKeyboardMarkup:
     buttons = [
         KeyboardButton("Устал"),
@@ -39,7 +39,7 @@ def get_rest_markup() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(*buttons)
 
 
-# общее состояние риелтора
+# провал сделки
 def get_bad_deal_result() -> ReplyKeyboardMarkup:
     buttons = [
         KeyboardButton("Плохой объект"),

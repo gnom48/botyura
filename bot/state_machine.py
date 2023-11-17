@@ -15,4 +15,6 @@ class WorkStates(StatesGroup):
     deal_retult = State()
     deal_bad_result = State()
 
+    no_work_type = State()
+
     restart = State()

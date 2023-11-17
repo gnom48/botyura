@@ -43,8 +43,9 @@ def get_inline_menu_markup() -> InlineKeyboardMarkup:
         InlineKeyboardButton("Расклейка", callback_data="flyer"),
         InlineKeyboardButton("Сделка", callback_data="deal"),
         InlineKeyboardButton("Задаток", callback_data="deposit"),
-        InlineKeyboardButton("Отпуск", callback_data="vacation"),
-        InlineKeyboardButton("Больничный", callback_data="sick_leave"),
+        # InlineKeyboardButton("Отпуск", callback_data="vacation"),
+        # InlineKeyboardButton("Больничный", callback_data="sick_leave"),
+        InlineKeyboardButton("Не могу работать", callback_data="no_work"),
     ]
 
     inline_markup = InlineKeyboardMarkup(row_width=2)
