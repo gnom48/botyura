@@ -24,6 +24,39 @@ support_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 support_scheduler.start() 
 
 
+# инлайн режим бота
+@dp.inline_handler()
+async def inline_mode_query_handler(inline_query: types.InlineQuery):
+    text = inline_query.query or "default"
+    if text == "default":
+        return
+    elif text == "сотрудники":
+        res_str = "Список ID сотрудников:\n"
+        for rielter in Rielter.select():
+            res_str += f"\n#{rielter.rielter_id}"
+        item = types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(res_str), id=ADMIN_CHAT_ID, title="Список ID сотрудников")
+        await bot.answer_inline_query(inline_query_id=inline_query.id, results=[item], cache_time=1)
+    elif re.match(r'отч[её]т #\d+', text):
+        try:
+            currentWorkerId = int(text.split('#')[1])
+            results = Report.get_or_none(Report.rielter_id == currentWorkerId)
+            results_str = f"Долгосрочная статистика сотрудника #{currentWorkerId}:\n"
+            if results:
+                results_str += f"\nзвонков: {results.total_cold_call_count} \nвыездов на осмотры: {results.total_meet_new_objects}" \
+                    + f"\nаналитика: {results.total_analytics} \nподписано контрактов: {results.total_contrects_signed}" \
+                    + f"\nпоказано объектов: {results.total_show_objects} \nрасклеено объявлений: {results.total_posting_adverts}" \
+                    + f"\nклиентов готовых подписать договор: {results.total_take_in_work} \nклиентов внесли залог: {results.total_take_deposit_count}" \
+                    + f"\nзавершено сделок: {results.total_deals_count}"
+            else:
+                raise ValueError("Ошибка")
+        except Exception:
+                results_str = "Нет информации по такому сотруднику!"
+        item = types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(results_str), id=ADMIN_CHAT_ID, title=f"Долговременная статистика сотрудника #{currentWorkerId}")
+        await bot.answer_inline_query(inline_query_id=inline_query.id, results=[item], cache_time=1)
+    else:
+        return
+
+
 # команда задача
 @dp.message_handler(commands=['task'], state=WorkStates.ready)
 async def start_cmd(msg: types.Message, state: FSMContext):
@@ -163,15 +196,15 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
                            gender=data["gender"],
                            rielter_type=data["rielter_type"]).save()
             Report.create(rielter_id=data["rielter_id"]).save()
-    profile = Rielter.get(Rielter.rielter_id == callback.from_user.id)
+        profile = Rielter.get(Rielter.rielter_id == callback.from_user.id)
 
-    await bot.send_message(callback.from_user.id, f"Ваш профиль сформирован!\n\nID: {profile.rielter_id},\nФИО: {profile.fio},\nДата рождения: {profile.birthday},\nПол: {profile.gender},\nНаправление работы: {Rielter_type.get_by_id(pk=profile.rielter_type).rielter_type_name}")
-    await bot.send_message(callback.from_user.id, f"В каком направлении будешь работать сейчас?", reply_markup=get_inline_menu_markup())
-    await WorkStates.ready.set()
+        await bot.send_message(callback.from_user.id, f"Ваш профиль сформирован!\n\nID: {profile.rielter_id},\nФИО: {profile.fio},\nДата рождения: {profile.birthday},\nПол: {profile.gender},\nНаправление работы: {Rielter_type.get_by_id(pk=profile.rielter_type).rielter_type_name}")
+        await bot.send_message(callback.from_user.id, f"В каком направлении будешь работать сейчас?", reply_markup=get_inline_menu_markup())
+        await WorkStates.ready.set()
 
-    # запуск утреннего и вечернего оповещения 
-    main_scheduler.add_job(morning_notifications, trigger=CronTrigger(hour=18, minute=24), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": get_day_plan(data["rielter_type"]), "state": None, "keyboard": types.ReplyKeyboardRemove()})
-    main_scheduler.add_job(good_evening_notification, trigger=CronTrigger(hour=18, minute=30), kwargs={"chat_id": callback.from_user.id, "bot": bot})
+        # запуск утреннего и вечернего оповещения 
+        main_scheduler.add_job(morning_notifications, trigger=CronTrigger(hour=10, minute=0), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": get_day_plan(data["rielter_type"]), "state": None, "keyboard": types.ReplyKeyboardRemove()})
+        main_scheduler.add_job(good_evening_notification, trigger=CronTrigger(hour=18, minute=30), kwargs={"chat_id": callback.from_user.id, "bot": bot})
 
 
 # default хэндлер для клавиатуры, которая будет доступна всегда в состоянии ready

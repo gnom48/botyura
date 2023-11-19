@@ -27,6 +27,7 @@ async def morning_notifications(chat_id: int, bot: Bot, text: str, state: State,
         tmp.ready_deposit_count = 0
         tmp.take_deposit_count = 0
         tmp.deals_count = 0
+        tmp.analytics = 0
         tmp.save()
     else:
         Report.create(rielter_id=chat_id).save()
@@ -52,15 +53,17 @@ async def morning_notifications(chat_id: int, bot: Bot, text: str, state: State,
 # ежедневное вечернее подведение итогов
 async def good_evening_notification(chat_id: int, bot: Bot):
     holidays_ru = holidays.Russia(years=datetime.now().year)
-    if datetime.now().weekday() == 5 or datetime.now().weekday() == 6 or datetime.now().date() in holidays_ru:
-        return
-    day_results = Report.get(Report.rielter_id == chat_id)
-    day_results_str = f"\nЗвонков: {day_results.cold_call_count} \nвыездов на осмотры: {day_results.meet_new_objects}" \
-        + f"\аналитика: {day_results.analytics} \nподписано контрактов: {day_results.contrects_signed}" \
-        + f"\nпоказано объектов: {day_results.show_objects} \nрасклеено объявлений: {day_results.posting_adverts}" \
-        + f"\nклиентов готовых подписать договор: {day_results.take_deposit_count} \nклиентов внесли залог: {day_results.take_deposit_count}" \
-        + f"\nзавершено сделок: {day_results.deals_count}"
-    # dop_res: str = ""
+    # if datetime.now().weekday() == 5 or datetime.now().weekday() == 6 or datetime.now().date() in holidays_ru:
+    #     return
+    day_results = Report.get_or_none(Report.rielter_id == chat_id)
+    day_results_str = ""
+    if day_results:
+        day_results_str = f"\nЗвонков: {day_results.cold_call_count} \nвыездов на осмотры: {day_results.meet_new_objects}" \
+            + f"\nаналитика: {day_results.analytics} \nподписано контрактов: {day_results.contrects_signed}" \
+            + f"\nпоказано объектов: {day_results.show_objects} \nрасклеено объявлений: {day_results.posting_adverts}" \
+            + f"\nклиентов готовых подписать договор: {day_results.take_in_work} \nклиентов внесли залог: {day_results.take_deposit_count}" \
+            + f"\nзавершено сделок: {day_results.deals_count}"
+    # dop_res: str = "" # TODO: похвалить по категориям
     # if day_results.cold_call_count >= 5:
 
     # if day_results.meet_new_objects >= 2:
@@ -70,5 +73,21 @@ async def good_evening_notification(chat_id: int, bot: Bot):
     # if day_results.take_deposit_count
     # if day_results.deals_count
 
-    await bot.send_message(chat_id=chat_id, text=f"Доброе вечер! Жаль, но заканчивать рабочий день. \n\nДавай посмотрим, как ты потрудился сегодня: \n{day_results_str}")
+        day_results.total_cold_call_count += day_results.cold_call_count
+        day_results.total_meet_new_objects  += day_results.meet_new_objects
+        day_results.total_take_in_work  += day_results.take_in_work
+        day_results.total_contrects_signed  += day_results.contrects_signed
+        day_results.total_show_objects  += day_results.show_objects
+        day_results.total_posting_adverts  += day_results.posting_adverts
+        day_results.total_take_deposit_count  += day_results.take_deposit_count
+        day_results.total_deals_count  += day_results.deals_count
+        day_results.total_anaytics  += day_results.analytics
+        day_results.save()
+    else:
+        Report.create(rielter_id=chat_id).save()
+
+    worker = Rielter.get_by_id(pk=chat_id)
+
+    await bot.send_message(chat_id=chat_id, text=f"Доброе вечер! Жаль, но пора заканчивать рабочий день. \n\nДавай посмотрим, как ты потрудился сегодня: \n{day_results_str}")
+    await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник #{chat_id} {worker.fio} завершил рабочий день. \nОтчет: \n{day_results_str}")
     

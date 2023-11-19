@@ -56,7 +56,7 @@ class Report(BaseModel):
     total_posting_adverts = IntegerField(default=0)
     total_take_deposit_count = IntegerField(default=0)
     total_deals_count = IntegerField(default=0)
-    totel_analytics = IntegerField(default=0)
+    total_analytics = IntegerField(default=0)
 
 
 class Task(BaseModel):
