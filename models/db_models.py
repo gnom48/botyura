@@ -59,6 +59,18 @@ class Report(BaseModel):
     totel_analytics = IntegerField(default=0)
 
 
+class Task(BaseModel):
+
+    class Meta:
+        db_table = "Tasks"
+
+    rielter_id = ForeignKeyField(Rielter)
+    task_name = TextField(default="")
+    task_deskription = TextField(default="")
+    date_planed = DateField(default="")
+    
+
+
 def create_db():
     db.connect()
     if not Rielter_type.table_exists():
@@ -72,3 +84,6 @@ def create_db():
         
     if not Report.table_exists():
         db.create_tables([Report])
+
+    if not Task.table_exists():
+        db.create_tables([Task])

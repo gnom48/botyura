@@ -24,6 +24,47 @@ support_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 support_scheduler.start() 
 
 
+# команда задача
+@dp.message_handler(commands=['task'], state=WorkStates.ready)
+async def start_cmd(msg: types.Message, state: FSMContext):
+    await msg.answer("Отлично, давайте запишем новое напоминание!", reply_markup=types.ReplyKeyboardRemove())
+    await msg.answer("Напишите краткое название задачи:")
+    await WorkStates.task_name.set()
+    
+    
+# ввод названия задачи
+@dp.message_handler(state=WorkStates.task_name)
+async def start_cmd(msg: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["task_name"] = msg.text
+    await msg.answer("Теперь напишите описание задачи (то что не хотите забыть):")
+    await WorkStates.task_desc.set()
+    
+
+# ввод описания задачи
+@dp.message_handler(state=WorkStates.task_desc)
+async def start_cmd(msg: types.Message, state: FSMContext):
+    async with state.proxy() as data:
+        data["task_deskription"] = msg.text
+    await msg.answer("Теперь напишите дату (в формате ГГГГ-ММ-ДД), когда вам нужно об этом напомнить:")
+    await WorkStates.task_date.set()
+    
+
+# ввод даты задачи
+@dp.message_handler(state=WorkStates.task_date)
+async def start_cmd(msg: types.Message, state: FSMContext):
+    if re.match(r'\d{4}\-\d{2}\-\d{2}', msg.text):
+        async with state.proxy() as data:
+            Task.create(rielter_id=msg.from_user.id, 
+                task_name=data["task_name"], 
+                task_deskription=data["task_deskription"], 
+                date_planed=msg.text).save()
+        await msg.answer("Принято! Я обязательно напомню тебе об этом, когда придет время.")
+        await WorkStates.ready.set()
+    else:
+        await msg.answer("Возможно что-то с форматом даты, попробуй еще раз", reply_markup=types.ReplyKeyboardRemove())
+
+
 # команда меню
 @dp.message_handler(commands=['menu'], state=WorkStates.ready)
 async def start_cmd(msg: types.Message):
@@ -129,7 +170,7 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
     await WorkStates.ready.set()
 
     # запуск утреннего и вечернего оповещения 
-    main_scheduler.add_job(morning_notifications, trigger=CronTrigger(hour=10, minute=0), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": get_day_plan(data["rielter_type"]), "state": None, "keyboard": None})
+    main_scheduler.add_job(morning_notifications, trigger=CronTrigger(hour=18, minute=24), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": get_day_plan(data["rielter_type"]), "state": None, "keyboard": types.ReplyKeyboardRemove()})
     main_scheduler.add_job(good_evening_notification, trigger=CronTrigger(hour=18, minute=30), kwargs={"chat_id": callback.from_user.id, "bot": bot})
 
 
@@ -348,6 +389,6 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
     await msg.answer(f"Я все понял. Не буду беспокоить тебя {days_count} дней!")
     await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник #{msg.from_user.id} взял больничный на {days_count} дней.")
     await WorkStates.ready.set()
-    
+
 
 # TODO: скорее всего надо будет написать команду "запланировать активность" - команда /notification

@@ -22,4 +22,8 @@ class WorkStates(StatesGroup):
     no_work_type = State()
     enter_days_illor_rest = State()
 
+    task_name = State()
+    task_desc = State()
+    task_date = State()
+
     restart = State()
