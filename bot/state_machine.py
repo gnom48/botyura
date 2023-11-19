@@ -14,7 +14,12 @@ class WorkStates(StatesGroup):
     deal_enter_deal_type = State()
     deal_retult = State()
     deal_bad_result = State()
+    show_result = State()
+    deposit_result = State()
+
+    meet_new_object_result = State()
 
     no_work_type = State()
+    enter_days_illor_rest = State()
 
     restart = State()

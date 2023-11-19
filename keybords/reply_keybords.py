@@ -7,12 +7,23 @@ def get_start_markup() -> ReplyKeyboardMarkup:
     return start_markup
 
 
-# виды сделок
-def get_meeting_markup() -> ReplyKeyboardMarkup:
+# виды сделок частное
+def get_meeting_private_markup() -> ReplyKeyboardMarkup:
     buttons = [
         KeyboardButton("Квартира"),
         KeyboardButton("Земля"),
         KeyboardButton("Дом"),
+        KeyboardButton("Назад"),
+    ]
+    return ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(*buttons)
+
+
+# виды сделок коммерческое
+def get_meeting_commercial_markup() -> ReplyKeyboardMarkup:
+    buttons = [
+        KeyboardButton("Офис"),
+        KeyboardButton("Магазин"),
+        KeyboardButton("Другое"),
         KeyboardButton("Назад"),
     ]
     return ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(*buttons)
@@ -39,7 +50,7 @@ def get_rest_markup() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(*buttons)
 
 
-# провал сделки
+# провал сделки TODO: адаптировать под показ
 def get_bad_deal_result() -> ReplyKeyboardMarkup:
     buttons = [
         KeyboardButton("Плохой объект"),
