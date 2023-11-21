@@ -12,6 +12,7 @@ async def send_notification(chat_id: int, bot: Bot, text: str, state: State, key
     await bot.send_message(chat_id=chat_id, text=text, reply_markup=keyboard)
     if state:
         await state.set()
+
         
 # ежедневные утренние напоминания
 async def morning_notifications(chat_id: int, bot: Bot, text: str, state: State, keyboard):

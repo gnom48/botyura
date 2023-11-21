@@ -26,4 +26,6 @@ class WorkStates(StatesGroup):
     task_desc = State()
     task_date = State()
 
+    enter_task_id = State()
+
     restart = State()
