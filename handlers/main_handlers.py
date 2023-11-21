@@ -9,8 +9,11 @@ from .notifications import *
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime, timedelta
+from apscheduler.schedulers.blocking import BlockingScheduler
 import re
 import asyncio
+import calendar
+from apscheduler.triggers.cron import CronTrigger
 
 
 bot = Bot(token=TOKEN)
@@ -22,6 +25,15 @@ main_scheduler.start()
 
 support_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 support_scheduler.start() 
+
+lastMessage = dict()
+
+# словарь {id: [timeout, true]} 
+# потом async def с счётчиком который timeout++
+# в каждой ждущей функции сбрасывать задачу счётчика, 
+
+month_scheduler = BlockingScheduler()
+month_scheduler.start()
 
 
 # инлайн режим бота
@@ -39,19 +51,10 @@ async def inline_mode_query_handler(inline_query: types.InlineQuery):
     elif re.match(r'отч[её]т #\d+', text):
         try:
             currentWorkerId = int(text.split('#')[1])
-            results = Report.get_or_none(Report.rielter_id == currentWorkerId)
-            results_str = f"Долгосрочная статистика сотрудника #{currentWorkerId}:\n"
-            if results:
-                results_str += f"\nзвонков: {results.total_cold_call_count} \nвыездов на осмотры: {results.total_meet_new_objects}" \
-                    + f"\nаналитика: {results.total_analytics} \nподписано контрактов: {results.total_contrects_signed}" \
-                    + f"\nпоказано объектов: {results.total_show_objects} \nрасклеено объявлений: {results.total_posting_adverts}" \
-                    + f"\nклиентов готовых подписать договор: {results.total_take_in_work} \nклиентов внесли залог: {results.total_take_deposit_count}" \
-                    + f"\nзавершено сделок: {results.total_deals_count}"
-            else:
-                raise ValueError("Ошибка")
+            result_str = get_total_statistics()
         except Exception:
                 results_str = "Нет информации по такому сотруднику!"
-        item = types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(results_str), id=ADMIN_CHAT_ID, title=f"Долговременная статистика сотрудника #{currentWorkerId}")
+        item = types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(results_str), id=ADMIN_CHAT_ID, title=result_str)
         await bot.answer_inline_query(inline_query_id=inline_query.id, results=[item], cache_time=1)
     else:
         return
@@ -67,25 +70,25 @@ async def start_cmd(msg: types.Message, state: FSMContext):
     
 # ввод названия задачи
 @dp.message_handler(state=WorkStates.task_name)
-async def start_cmd(msg: types.Message, state: FSMContext):
+async def enter_task_name(msg: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["task_name"] = msg.text
     await msg.answer("Теперь напишите описание задачи (то что не хотите забыть):")
     await WorkStates.task_desc.set()
-    
+
 
 # ввод описания задачи
 @dp.message_handler(state=WorkStates.task_desc)
-async def start_cmd(msg: types.Message, state: FSMContext):
+async def enter_task_desk(msg: types.Message, state: FSMContext):
     async with state.proxy() as data:
         data["task_deskription"] = msg.text
     await msg.answer("Теперь напишите дату (в формате ГГГГ-ММ-ДД), когда вам нужно об этом напомнить:")
     await WorkStates.task_date.set()
-    
+
 
 # ввод даты задачи
 @dp.message_handler(state=WorkStates.task_date)
-async def start_cmd(msg: types.Message, state: FSMContext):
+async def enter_task_date(msg: types.Message, state: FSMContext):
     if re.match(r'\d{4}\-\d{2}\-\d{2}', msg.text):
         async with state.proxy() as data:
             Task.create(rielter_id=msg.from_user.id, 
@@ -205,6 +208,9 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
         # запуск утреннего и вечернего оповещения 
         main_scheduler.add_job(morning_notifications, trigger=CronTrigger(hour=10, minute=0), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": get_day_plan(data["rielter_type"]), "state": None, "keyboard": types.ReplyKeyboardRemove()})
         main_scheduler.add_job(good_evening_notification, trigger=CronTrigger(hour=18, minute=30), kwargs={"chat_id": callback.from_user.id, "bot": bot})
+        
+        # запуск ежемесячного отчета
+        month_scheduler.add_job(send_notification, 'date', run_date=datetime.now().replace(hour=10, minute=30) + timedelta(days=1), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": get_total_statistics(), "state": None, "keyboard": types.ReplyKeyboardRemove()})
 
 
 # default хэндлер для клавиатуры, которая будет доступна всегда в состоянии ready

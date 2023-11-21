@@ -50,11 +50,22 @@ async def morning_notifications(chat_id: int, bot: Bot, text: str, state: State,
         await state.set()
 
 
+def get_total_statistics(currentWorkerId: int) -> str:
+    results = Report.get_or_none(Report.rielter_id == currentWorkerId)
+    if results:
+        results_str = f"Долгосрочная статистика сотрудника #{currentWorkerId}:\n"
+        results_str += f"\nзвонков: {results.total_cold_call_count} \nвыездов на осмотры: {results.total_meet_new_objects}" \
+            + f"\nаналитика: {results.total_analytics} \nподписано контрактов: {results.total_contrects_signed}" \
+            + f"\nпоказано объектов: {results.total_show_objects} \nрасклеено объявлений: {results.total_posting_adverts}" \
+            + f"\nклиентов готовых подписать договор: {results.total_take_in_work} \nклиентов внесли залог: {results.total_take_deposit_count}" \
+            + f"\nзавершено сделок: {results.total_deals_count}"
+        return results_str
+
 # ежедневное вечернее подведение итогов
 async def good_evening_notification(chat_id: int, bot: Bot):
     holidays_ru = holidays.Russia(years=datetime.now().year)
-    # if datetime.now().weekday() == 5 or datetime.now().weekday() == 6 or datetime.now().date() in holidays_ru:
-    #     return
+    if datetime.now().weekday() == 5 or datetime.now().weekday() == 6 or datetime.now().date() in holidays_ru:
+        return
     day_results = Report.get_or_none(Report.rielter_id == chat_id)
     day_results_str = ""
     if day_results:
