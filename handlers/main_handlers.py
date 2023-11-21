@@ -26,15 +26,9 @@ main_scheduler.start()
 support_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 support_scheduler.start() 
 
-lastMessage = dict()
-
 # словарь {id: [timeout, true]} 
 # потом async def с счётчиком который timeout++
 # в каждой ждущей функции сбрасывать задачу счётчика, 
-
-month_scheduler = BlockingScheduler()
-month_scheduler.start()
-
 
 # инлайн режим бота
 @dp.inline_handler()

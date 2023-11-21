@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from emoji import emojize
 import datetime
 
 # выбор пола
@@ -50,7 +51,25 @@ def get_inline_menu_markup() -> InlineKeyboardMarkup:
     inline_markup.add(*buttons)
 
     return inline_markup
+    
+def get_inline_menu_markup_emoji() -> InlineKeyboardMarkup:
+    buttons = [
+        InlineKeyboardButton(emojize(":bar_chart: Аналитика"), callback_data="analytics"),
+        InlineKeyboardButton(emojize(":handshake: Встреча"), callback_data="meet_new_objects"),
+        InlineKeyboardButton(emojize(":telephone_receiver: Обзвон"), callback_data="cold_call_count"),
+        InlineKeyboardButton(emojize(":house: Показ"), callback_data="show_objects"),
+        InlineKeyboardButton(emojize("🔍Поиск"), callback_data="search"),
+        InlineKeyboardButton(emojize(":newspaper: Расклейка"), callback_data="posting_adverts"),
+        InlineKeyboardButton(emojize("📈Сделка"), callback_data="deals_count"),
+        InlineKeyboardButton(emojize(":money_bag: Задаток"), callback_data="deposit"),
+        InlineKeyboardButton(emojize(":palm_tree: Отпуск"), callback_data="vacation"),
+        InlineKeyboardButton(emojize(":face_with_thermometer: Больничный"), callback_data="sick_leave"),
+    ]
 
+    inline_markup = InlineKeyboardMarkup(row_width=2)
+    inline_markup.add(*buttons)
+
+    return inline_markup
 
 # ветка встреча
 def get_inline_meeting_markup() -> InlineKeyboardMarkup:
