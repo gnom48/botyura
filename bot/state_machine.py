@@ -20,7 +20,7 @@ class WorkStates(StatesGroup):
     meet_new_object_result = State()
 
     no_work_type = State()
-    enter_days_illor_rest = State()
+    enter_days_ill_or_rest = State()
 
     task_name = State()
     task_desc = State()
