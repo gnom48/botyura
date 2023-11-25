@@ -8,7 +8,7 @@ from models import *
 from .notifications import *
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta
 import re
 import asyncio
 from apscheduler.triggers.cron import CronTrigger
@@ -30,23 +30,46 @@ month_scheduler.start()
 scheduler_list = dict() # словарь структуры { chat_id : { task_id : (kwargs, "занятие") } }
 
 
-# команда досрочно завершить заадчу
+# команда помощь
+@dp.message_handler(commands=['help'], state=WorkStates.ready)
+async def del_task_cmd(msg: types.Message, state: FSMContext):
+    last_messages[msg.from_user.id] = (datetime.now().time(), True)
+    await msg.answer(get_help_command_text())
+
+
+# команда досрочно завершить задачу
 @dp.message_handler(commands=['del_task'], state=WorkStates.ready)
 async def del_task_cmd(msg: types.Message, state: FSMContext):
+    last_messages[msg.from_user.id] = (datetime.now().time(), True)
     res_str = ""
     c = 0
-    for t in scheduler_list[msg.from_user.id].keys():
-        res_str += f"{c+1}) задача #{scheduler_list[msg.from_user.id][t][1]}\n"
-        c += 1
-    res_str += "\n\nВведите порядковый номер задачи, которую хотите завершить досрочно \n(Введите 0 чтобы выйти):"
-    await bot.send_message(chat_id=msg.from_user.id, text=res_str)
-    await WorkStates.enter_task_id.set()
+    # tasks_to_del = []
+
+    for task in scheduler_list[msg.from_user.id].keys():
+        if support_scheduler.get_job(task):
+            res_str += f"{c+1}) задача #{scheduler_list[msg.from_user.id][task][1]}\n"
+            c += 1
+        # else:
+            # tasks_to_del.append(scheduler_list[msg.from_user.id][task])
+
+    # TODO: придумать как удалять непосредственно из вложенного словаря scheduler_list[msg.from_user.id]
+
+    if c > 0:
+        res_str += "\n\nВведите порядковый номер задачи, которую хотите завершить досрочно \n(Введите 0 чтобы выйти):"
+        await bot.send_message(chat_id=msg.from_user.id, text=res_str)
+        await WorkStates.enter_task_id.set()
+    else:
+        await bot.send_message(chat_id=msg.from_user.id, text="Вы еще не начинали никаких задач!")
+        await msg.answer(f"Хотите поработать сейчас?", reply_markup=get_inline_menu_markup())
+        await WorkStates.ready.set()
 
 
 # ввод порядкового номера задачи, которую досрочно завершаем
 @dp.message_handler(lambda msg: msg.text.isdigit(), state=WorkStates.enter_task_id)
 async def enter_del_task_id(msg: types.Message, state: FSMContext):
     if msg.text == "0":
+        await msg.answer(f"Чем займемся сейчас?", reply_markup=get_inline_menu_markup())
+        await WorkStates.ready.set()
         return
     c = 0
     if len(scheduler_list[msg.from_user.id].keys()) < c or c < 0:
@@ -62,32 +85,46 @@ async def enter_del_task_id(msg: types.Message, state: FSMContext):
 
 
 # инлайн режим бота
-@dp.inline_handler()
+@dp.inline_handler() # FIXME: не работает 
 async def inline_mode_query_handler(inline_query: types.InlineQuery):
     text = inline_query.query or "default"
+    print(text)
     if text == "default":
         return
     elif text == "сотрудники":
+        # id всех сотрудников
         res_str = "Список ID сотрудников:\n"
         for rielter in Rielter.select():
             res_str += f"\n#{rielter.rielter_id}"
-        item = types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(res_str), id=ADMIN_CHAT_ID, title="Список ID сотрудников")
-        await bot.answer_inline_query(inline_query_id=inline_query.id, results=[item], cache_time=1)
-    elif re.match(r'отч[её]т #\d+', text):
+        item_ids = types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(res_str), id=ADMIN_CHAT_ID, title="Список ID сотрудников")
+        
+        # статистика по id
+        result_str = ""
         try:
             currentWorkerId = int(text.split('#')[1])
-            result_str = get_total_statistics()
+            result_str = get_total_statistics(currentWorkerId)
         except Exception:
-                results_str = "Нет информации по такому сотруднику!"
-        item = types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(results_str), id=ADMIN_CHAT_ID, title=result_str)
+            result_str = "Нет информации по такому сотруднику!"
+        item_stat = types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(result_str), id=ADMIN_CHAT_ID, title="Отчет по сотркднику")
+
+        await bot.answer_inline_query(inline_query_id=inline_query.id, results=[item_ids, item_stat], cache_time=1)
+    elif re.match(r'отч[её]т #\d+', text):
+        result_str = ""
+        try:
+            currentWorkerId = int(text.split('#')[1])
+            result_str = get_total_statistics(currentWorkerId)
+        except Exception:
+            result_str = "Нет информации по такому сотруднику!"
+        item = types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(result_str), id=ADMIN_CHAT_ID, title="Отчет по сотркднику")
         await bot.answer_inline_query(inline_query_id=inline_query.id, results=[item], cache_time=1)
     else:
-        return
+        pass
 
 
 # команда задача
 @dp.message_handler(commands=['task'], state=WorkStates.ready)
 async def start_cmd(msg: types.Message, state: FSMContext):
+    last_messages[msg.from_user.id] = (datetime.now().time(), True)
     await msg.answer("Отлично, давайте запишем новое напоминание!", reply_markup=types.ReplyKeyboardRemove())
     await msg.answer("Напишите краткое название задачи:")
     await WorkStates.task_name.set()
@@ -115,6 +152,13 @@ async def enter_task_desk(msg: types.Message, state: FSMContext):
 @dp.message_handler(state=WorkStates.task_date)
 async def enter_task_date(msg: types.Message, state: FSMContext):
     if re.match(r'\d{4}\-\d{2}\-\d{2}', msg.text):
+        date_obj = datetime.strptime(msg.text, '%Y-%m-%d')
+        if date_obj <= datetime.now():
+            await msg.answer("Напоминания можно задавать только на будущее, попробуй еще раз!", reply_markup=types.ReplyKeyboardRemove())
+            return
+        if datetime.now().date().year - date_obj.date().year > 1:
+            await msg.answer("Не стоит загадывать на такой большой срок, лучше сосредоточтесь на настоящем! Попробуйте ввести дату еще раз!", reply_markup=types.ReplyKeyboardRemove())
+            return
         async with state.proxy() as data:
             Task.create(rielter_id=msg.from_user.id,
                 task_name=data["task_name"],
@@ -129,6 +173,7 @@ async def enter_task_date(msg: types.Message, state: FSMContext):
 # команда меню
 @dp.message_handler(commands=['menu'], state=WorkStates.ready)
 async def start_cmd(msg: types.Message):
+    last_messages[msg.from_user.id] = (datetime.now().time(), True)
     await msg.answer(f"Чем займемся сейчас?", reply_markup=get_inline_menu_markup())
     await WorkStates.ready.set()
 
@@ -136,6 +181,7 @@ async def start_cmd(msg: types.Message):
 # команда старт
 @dp.message_handler(commands=['start'], state="*")
 async def start_cmd(msg: types.Message):
+    last_messages[msg.from_user.id] = (datetime.now().time(), True)
     scheduler_list[msg.from_user.id] = {}
     oldRielter: any
     try:
@@ -173,10 +219,17 @@ async def enter_fio(msg: types.Message, state: FSMContext):
 @dp.message_handler(state=WorkStates.reg_enter_brthday)
 async def enter_brth(msg: types.Message, state: FSMContext):
     if re.match(r'\d{4}\-\d{2}\-\d{2}', msg.text):
+        date_obj = datetime.strptime(msg.text, '%Y-%m-%d')
+        if date_obj > datetime.now():
+            await msg.answer("О, вы из будущего, попробуйте ввести еще раз!", reply_markup=types.ReplyKeyboardRemove())
+            return
+        if datetime.now().date().year - date_obj.date().year < 15:
+            await msg.answer("Слишком юный возраст, попробуте ввести еще раз!", reply_markup=types.ReplyKeyboardRemove())
+            return
         async with state.proxy() as data:
             data["birthday"] = msg.text
     else:
-        await msg.answer("Возможно что-то с форматом даты, попробуй еще раз", reply_markup=types.ReplyKeyboardRemove())
+        await msg.answer("Возможно что-то с форматом даты, попробуй еще раз!", reply_markup=types.ReplyKeyboardRemove())
         return
     await msg.answer("Теперь введите пол:", reply_markup=get_gender_kb())
     await WorkStates.reg_enter_gender.set()
@@ -191,7 +244,6 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
     await callback.answer("✓")
     async with state.proxy() as data:
         data["gender"] = callback.data
-    await bot.send_message(callback.from_user.id, "Ок")
     await bot.send_message(callback.from_user.id, "Теперь выберите, направления вашей деятельности:", reply_markup=get_realtors_type_kb())
     await WorkStates.reg_enter_type.set()
 
@@ -251,26 +303,26 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
         if tmp:
             count += tmp.analytics
             Report.update(analytics=count+1).where(Report.rielter_id == callback.from_user.id).execute()
-        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Чем займёшься дальше?", "state": WorkStates.ready, "keyboard": get_inline_menu_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=300), kwargs=tmpKwargs)
+        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": generate_motivation_compliment() + "\n\nЧем займёшься дальше?", "state": WorkStates.ready, "keyboard": get_inline_menu_markup(), "timeout": True}
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=10), kwargs=tmpKwargs)
         scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Аналитика")
 
     elif callback.data == "meeting":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, удачной поездки, вернусь...!")
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошла встреча?", "state": WorkStates.meet_new_object_result, "keyboard": get_meeting_result_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=300), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=10), kwargs=tmpKwargs)
         scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Встреча")
 
     elif callback.data == "call":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, я вернусь через час, поитересоваться твоими успехами!")
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как твои успехи в прозвонах? Сколько рабочих звонков ты успел совершить?", "state": WorkStates.enter_calls_count, "keyboard": None, "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=300), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=10), kwargs=tmpKwargs)
         scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Прозвон")
 
     elif callback.data == "show":
         await bot.send_message(chat_id=callback.from_user.id, text="Отлично, желаю удачного показа, скоро вернусь!")
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошел показ?", "state": WorkStates.show_result, "keyboard": get_meeting_result_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=300), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=10), kwargs=tmpKwargs)
         scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Показ")
 
     elif callback.data == "search":
@@ -280,14 +332,14 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
             count = 0
             count += tmp.analytics
             Report.update(analytics=count+1).where(Report.rielter_id == callback.from_user.id).execute()
-        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Чем займёшься дальше?", "state": WorkStates.ready, "keyboard": get_inline_menu_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=300), kwargs=tmpKwargs)
+        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": generate_motivation_compliment() + "\n\nЧем займёшься дальше?", "state": WorkStates.ready, "keyboard": get_inline_menu_markup(), "timeout": True}
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=10), kwargs=tmpKwargs)
         scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Поиск")
 
     elif callback.data == "flyer":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, я вернусь через час, поитересоваться твоими успехами!")
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как твои успехи в расклейке? Прогулялся, отдохнул, готов к работе? Сколько объявлений ты расклеил?", "state": WorkStates.enter_flyer_count, "keyboard": None, "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=300), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=10), kwargs=tmpKwargs)
         scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Расклейка")
 
     elif callback.data == "deal":
@@ -301,7 +353,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
     elif callback.data == "deposit":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, удачи. Скоро вернусь")
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошло получение задатка?", "state": WorkStates.deposit_result, "keyboard": get_meeting_result_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=300), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=10), kwargs=tmpKwargs)
         scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Задаток")
 
     elif callback.data == "no_work":
@@ -319,6 +371,8 @@ async def enter_posting_adverts_count(msg: types.Message, state: FSMContext):
     count: int = 0
     try:
         count = int(msg.text)
+        if count < 0:
+            raise Exception()
     except Exception:
         await msg.reply("Ошибка, попробуй ввести еще раз!")
         return
@@ -338,6 +392,8 @@ async def enter_posting_adverts_count(msg: types.Message, state: FSMContext):
     count: int = 0
     try:
         count = int(msg.text)
+        if count < 0:
+            raise Exception()
     except Exception:
         await msg.reply("Ошибка, попробуй ввести еще раз!")
         return
@@ -363,7 +419,7 @@ async def enter_deal_type(msg: types.Message, state: FSMContext):
     await WorkStates.ready.set()
     await msg.answer(text=f"Отлично! Вернусь через 2 часа и спрошу как у тебя дела!", reply_markup=types.ReplyKeyboardRemove())
     tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": f"Как прошла сделка в категории: #{msg.text} ?", "state": WorkStates.deal_retult, "keyboard": get_meeting_result_markup(), "timeout": True}
-    job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=300), kwargs=tmpKwargs)
+    job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=10), kwargs=tmpKwargs)
     scheduler_list[msg.from_user.id][job.id] = (tmpKwargs, "Сделка")
 
 # if msg.text.split('#')[1][:-2] == "Квартира":
@@ -418,7 +474,7 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
         if tmp:
             count += tmp.take_deposit_count
             Report.update(take_deposit_count=count+1).where(Report.rielter_id == msg.from_user.id).execute()
-        await msg.answer(generate_initiative_compliment())
+        await msg.answer(generate_deposit_compliment())
     elif msg.text == "Плохо":
         await msg.answer(generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
     await msg.answer(f"Чем займемся сейчас?", reply_markup=get_inline_menu_markup())
@@ -435,7 +491,7 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
         if tmp:
             count += tmp.meet_new_objects
             Report.update(meet_new_objects=count+1).where(Report.rielter_id == msg.from_user.id).execute()
-        await msg.answer(generate_initiative_compliment())
+        await msg.answer(generate_client_meeting_compliment())
     elif msg.text == "Плохо":
         await msg.answer(generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
     await msg.answer(f"Чем займемся сейчас?", reply_markup=get_inline_menu_markup())
@@ -451,8 +507,8 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
         await WorkStates.ready.set()
     elif msg.text == "Устал":
         await msg.answer("Конечно ты можешь отдохнуть, я напомню тебе про работу через час.")
-        tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": "Отдохнул, готов поработать?", "state": WorkStates.ready, "keyboard": get_inline_menu_markup()}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": "Отдохнул, готов поработать?", "state": WorkStates.ready, "keyboard": get_inline_menu_markup(), "timeout": True}
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=10), kwargs=tmpKwargs)
         scheduler_list[msg.from_user.id][job.id] = (tmpKwargs, "Отдых")
         await WorkStates.ready.set()
     elif msg.text == "Отпуск":
@@ -473,10 +529,19 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
     last_messages[msg.from_user.id] = (datetime.now().time(), True)
     try:
         days_count = int(msg.text)
+        if days_count < 0:
+            raise Exception()
     except Exception:
         await msg.reply("Ошибка, попробуй ввести еще раз!")
         return
     async with state.proxy() as data:
         await msg.answer(f"Я все понял. Не буду тревожить тебя {days_count} дней!")
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник #{msg.from_user.id} хочет взять #{data['rest_type']} на {days_count} дней.")
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник  {Rielter.get_or_none(Rielter.rielter_id == msg.from_user.id).fio} #{msg.from_user.id} хочет взять #{data['rest_type']} на {days_count} дней.")
         await WorkStates.ready.set()
+
+
+# если поболтать
+@dp.message_handler(state=WorkStates.ready)
+async def talks(msg: types.Message, state: FSMContext):
+    last_messages[msg.from_user.id] = (datetime.now().time(), True)
+    await msg.answer("Вам стоит выбрать какое-нибудь действие, если вы потерялись - обратитесь к справке /help или вашему руководителю!")

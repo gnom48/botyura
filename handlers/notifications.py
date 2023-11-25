@@ -15,8 +15,8 @@ holidays_ru = {"state_holidays": {}, "birthdays": {}}
 # таймер игнора
 async def counter_time(chat_id: int, bot: Bot) -> None:
     time_point = datetime.now().time()
-    if time_point > time(18, 0) or time_point < time_point(10, 0):
-        return
+    # if time_point > time(18, 0) or time_point < time_point(10, 0):
+    #     return
     last_messages[chat_id] = (time_point, True)
     await asyncio.sleep(10) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
@@ -32,13 +32,13 @@ async def counter_time(chat_id: int, bot: Bot) -> None:
     
     await asyncio.sleep(10) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник #{chat_id} не отвечает на сообщения уже 3 часа!")
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} #{chat_id} не отвечает на сообщения уже 3 часа!")
         await bot.send_message(chat_id=chat_id, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
     else:
         return
     
 
-# напоминание
+# универсальное сообщение
 async def send_notification(chat_id: int, bot: Bot, text: str, state: State, keyboard, timeout: bool):
     await bot.send_message(chat_id=chat_id, text=text, reply_markup=keyboard)
     if state:
@@ -50,6 +50,7 @@ async def send_notification(chat_id: int, bot: Bot, text: str, state: State, key
 # ежедневные утренние напоминания
 async def morning_notifications(chat_id: int, bot: Bot, text: str, state: State, keyboard):
     # ежедневный сброс счётчиков
+    last_messages = {}
     tmp = Report.get_or_none(Report.rielter_id == chat_id)
     if tmp:
         tmp.cold_call_count = 0
@@ -87,12 +88,16 @@ async def morning_notifications(chat_id: int, bot: Bot, text: str, state: State,
 def get_total_statistics(currentWorkerId: int) -> str:
     results = Report.get_or_none(Report.rielter_id == currentWorkerId)
     if results:
-        results_str = f"Долгосрочная статистика сотрудника #{currentWorkerId}:\n"
-        results_str += f"\nзвонков: {results.total_cold_call_count} \nвыездов на осмотры: {results.total_meet_new_objects}" \
-            + f"\nаналитика: {results.total_analytics} \nподписано контрактов: {results.total_contrects_signed}" \
-            + f"\nпоказано объектов: {results.total_show_objects} \nрасклеено объявлений: {results.total_posting_adverts}" \
-            + f"\nклиентов готовых подписать договор: {results.total_take_in_work} \nклиентов внесли залог: {results.total_take_deposit_count}" \
-            + f"\nзавершено сделок: {results.total_deals_count}"
+        tmp = Rielter.get_or_none(Rielter.rielter_id == currentWorkerId)
+        if tmp:
+            results_str = f"Долгосрочная статистика сотрудника #{currentWorkerId} {tmp.fio}:\n"
+            results_str += f"\nзвонков: {results.total_cold_call_count} \nвыездов на осмотры: {results.total_meet_new_objects}" \
+                + f"\nаналитика: {results.total_analytics} \nподписано контрактов: {results.total_contrects_signed}" \
+                + f"\nпоказано объектов: {results.total_show_objects} \nрасклеено объявлений: {results.total_posting_adverts}" \
+                + f"\nклиентов готовых подписать договор: {results.total_take_in_work} \nклиентов внесли залог: {results.total_take_deposit_count}" \
+                + f"\nзавершено сделок: {results.total_deals_count}"
+        else:
+            results_str = "Нет статистики по этому сотруднику!"
         return results_str
 
 
