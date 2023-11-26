@@ -32,7 +32,7 @@ async def counter_time(chat_id: int, bot: Bot) -> None:
     
     await asyncio.sleep(10) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} #{chat_id} не отвечает на сообщения уже 3 часа!")
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} (#{chat_id}) не отвечает на сообщения уже 3 часа!")
         await bot.send_message(chat_id=chat_id, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
     else:
         return
@@ -50,7 +50,7 @@ async def send_notification(chat_id: int, bot: Bot, text: str, state: State, key
 # ежедневные утренние напоминания
 async def morning_notifications(chat_id: int, bot: Bot, text: str, state: State, keyboard):
     # ежедневный сброс счётчиков
-    last_messages = {}
+    last_messages.clear()
     tmp = Report.get_or_none(Report.rielter_id == chat_id)
     if tmp:
         tmp.cold_call_count = 0
@@ -68,11 +68,16 @@ async def morning_notifications(chat_id: int, bot: Bot, text: str, state: State,
         Report.create(rielter_id=chat_id).save()
 
     holidays_ru["state_holidays"] = holidays.Russia(years=datetime.now().year)
+    for rielter in Rielter.select():
+        holidays_ru["birthdays"][datetime.datetime.strptime(rielter.birthday, "%Y-%m-%d").date()] = rielter.fio
     if datetime.now().weekday() == 5 or datetime.now().weekday() == 6 or datetime.now().date() in holidays_ru:
         if datetime.now().date() in holidays_ru:
             await bot.send_message(chat_id=chat_id, text=f"Поздравляю с праздником! Сегодня - {holidays_ru['state_holidays'][datetime.now().date()]}", reply_markup=keyboard)
         return
-
+    
+    if datetime.now().date() in holidays_ru["birthdays"][datetime.now().date()]:
+        await bot.send_message(chat_id=chat_id, text=f"От ваших коллег, руководителей и от себя, поздравляю вас с днем рождения! 🎉 Желаю вам океан счастья, гору улыбок и сверкающих моментов в этот особенный день! 🎂❤️")
+        
     await bot.send_message(chat_id=chat_id, text=text, reply_markup=keyboard)
     # напоминания на день
     task_list: list = Task.select().where(Task.rielter_id == chat_id and Task.date_planed == datetime.now().date())
@@ -90,7 +95,7 @@ def get_total_statistics(currentWorkerId: int) -> str:
     if results:
         tmp = Rielter.get_or_none(Rielter.rielter_id == currentWorkerId)
         if tmp:
-            results_str = f"Долгосрочная статистика сотрудника #{currentWorkerId} {tmp.fio}:\n"
+            results_str = f"Долгосрочная статистика сотрудника {tmp.fio} (#{currentWorkerId}):\n"
             results_str += f"\nзвонков: {results.total_cold_call_count} \nвыездов на осмотры: {results.total_meet_new_objects}" \
                 + f"\nаналитика: {results.total_analytics} \nподписано контрактов: {results.total_contrects_signed}" \
                 + f"\nпоказано объектов: {results.total_show_objects} \nрасклеено объявлений: {results.total_posting_adverts}" \
@@ -144,5 +149,5 @@ async def good_evening_notification(chat_id: int, bot: Bot):
     worker = Rielter.get_by_id(pk=chat_id)
 
     await bot.send_message(chat_id=chat_id, text=f"Доброе вечер! Жаль, но пора заканчивать рабочий день. \n\nДавай посмотрим, как ты потрудился сегодня: \n{day_results_str}")
-    await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник #{chat_id} {worker.fio} завершил рабочий день. \nОтчет: \n{day_results_str}")
+    await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {worker.fio} (#{chat_id}) завершил рабочий день. \nОтчет: \n{day_results_str}")
     

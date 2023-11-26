@@ -14,6 +14,7 @@ class WorkStates(StatesGroup):
     deal_enter_deal_type = State()
     deal_retult = State()
     deal_bad_result = State()
+    deal_why_bad_result = State()
     show_result = State()
     deposit_result = State()
 
