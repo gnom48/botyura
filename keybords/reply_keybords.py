@@ -39,6 +39,15 @@ def get_meeting_result_markup() -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(*buttons)
 
 
+# все понятно?
+def get_is_all_materials_ok_markup() -> ReplyKeyboardMarkup:
+    buttons = [
+        KeyboardButton("Спасибо, все понятно"),
+        KeyboardButton("Нужна еще информация"),
+    ]
+    return ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True).add(*buttons)
+
+
 # общее состояние риелтора - не буду работать
 def get_rest_markup() -> ReplyKeyboardMarkup:
     buttons = [

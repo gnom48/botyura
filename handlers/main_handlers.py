@@ -24,8 +24,8 @@ main_scheduler.start()
 support_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 support_scheduler.start()
 
-month_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-month_scheduler.start()
+month_week_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+month_week_scheduler.start()
 
 scheduler_list = dict() # словарь структуры { chat_id : { task_id : (kwargs, "занятие") } }
 
@@ -92,7 +92,7 @@ async def inline_mode_query_handler(inline_query: types.InlineQuery):
         items = []
         for rielter in Rielter.select():
             try:
-                items.append(types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(get_total_statistics(rielter.rielter_id)), id=str(rielter.rielter_id), title=f"Отчёт {rielter.fio}"))
+                items.append(types.InlineQueryResultArticle(input_message_content=types.InputTextMessageContent(get_month_statistics(rielter.rielter_id)), id=str(rielter.rielter_id), title=f"Отчёт {rielter.fio}"))
             except:
                 continue
         await bot.answer_inline_query(inline_query_id=inline_query.id, results=items, cache_time=1)
@@ -247,6 +247,8 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
                                          gender=data["gender"],
                                          rielter_type=data["rielter_type"]).where(Rielter.rielter_id == data["rielter_id"]).execute()
             Report.update(rielter_id=data["rielter_id"]).execute()
+            WeekReport.update(rielter_id=data["rielter_id"]).execute()
+            MonthReport.update(rielter_id=data["rielter_id"]).execute()
         else:
             Rielter.create(rielter_id=data["rielter_id"],
                            fio=data["fio"],
@@ -254,6 +256,8 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
                            gender=data["gender"],
                            rielter_type=data["rielter_type"]).save()
             Report.create(rielter_id=data["rielter_id"]).save()
+            WeekReport.create(rielter_id=data["rielter_id"]).save()
+            MonthReport.create(rielter_id=data["rielter_id"]).save()
         profile = Rielter.get(Rielter.rielter_id == callback.from_user.id)
 
         await bot.send_message(callback.from_user.id, f"Ваш профиль сформирован!\n\nID: {profile.rielter_id},\nФИО: {profile.fio},\nДата рождения: {profile.birthday},\nПол: {profile.gender},\nНаправление работы: {Rielter_type.get_by_id(pk=profile.rielter_type).rielter_type_name}")
@@ -264,8 +268,9 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
         main_scheduler.add_job(morning_notifications, trigger=CronTrigger(hour=10, minute=0), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": get_day_plan(data["rielter_type"]), "state": None, "keyboard": types.ReplyKeyboardRemove()})
         main_scheduler.add_job(good_evening_notification, trigger=CronTrigger(hour=18, minute=30), kwargs={"chat_id": callback.from_user.id, "bot": bot})
 
-        # запуск ежемесячного отчета
-        month_scheduler.add_job(send_notification, 'date', run_date=datetime.now().replace(hour=10, minute=30) + timedelta(days=1), kwargs={"chat_id": callback.from_user.id, "bot": bot, "text": get_total_statistics(callback.from_user.id), "state": None, "keyboard": types.ReplyKeyboardRemove(), "timeout": False})
+        # запуск ежемесячного и еженедельного отчета
+        month_week_scheduler.add_job(func=send_notification, trigger='cron', day='last', hour=10, minute=30, kwargs={"chat_id": ADMIN_CHAT_ID, "bot": bot, "text": get_month_statistics(callback.from_user.id), "state": None, "keyboard": types.ReplyKeyboardRemove(), "timeout": False})
+        month_week_scheduler.add_job(func=send_notification, trigger='cron', day_of_week='mon', hour=10, minute=30, kwargs={"chat_id": ADMIN_CHAT_ID, "bot": bot, "text": get_week_statistics(callback.from_user.id), "state": None, "keyboard": types.ReplyKeyboardRemove(), "timeout": False})
 
 
 # default хэндлер для клавиатуры, которая будет доступна всегда в состоянии ready
@@ -341,18 +346,6 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
         await bot.send_message(chat_id=callback.from_user.id, text="О нет, необработанная ситация!\nПросим вас сделать скриншот этой ситуации и направить разработчикам.")
 
 
-# что конкретно плохо
-@dp.message_handler(lambda msg: msg.text.isdigit(), state=WorkStates.deal_why_bad_result)
-async def enter_why_deal_bad(msg: types.Message, state: FSMContext):
-    try:
-        filr = types.InputFile(f"\\files\\part_{msg.text}.pdf")
-        await msg.answer_document()
-        await msg.answer("Обязательно повтори этот материал, это поможет тебе в будущем избежать подобных ошибок. Я в тебя верю!")
-        await WorkStates.ready.set()
-    except Exception:
-        await msg.answer("Боюсь я не нашел нужной информации по этой теме, подсказать что-то еще?")
-
-
 # количество расклеенных листовок
 @dp.message_handler(lambda msg: msg.text, state=WorkStates.enter_flyer_count)
 async def enter_posting_adverts_count(msg: types.Message, state: FSMContext):
@@ -419,6 +412,89 @@ async def enter_deal_type(msg: types.Message, state: FSMContext):
 #     pass
 
 
+# что конкретное не так (обработка кнопок и список)
+@dp.callback_query_handler(state=WorkStates.deal_why_bad_result)
+async def enter_why_deal_bad(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer("✓")
+    if callback.data in ("object", "saller", "nb", "client", "depositer", "meeter"):
+        if callback.data == "object":
+            await bot.send_message(chat_id=callback.from_user.id, text=f"Бывают и такие объекты, которые не стоили потраченного времени!\nИзучи этот материал, это позволит тебе в будущем избежать подобных ошибок:", 
+                                reply_markup=get_video_link("https://www.youtube.com/watch?v=Cy0MmA1o1uY"))
+            await WorkStates.ready.set()
+
+        elif callback.data == "saller":
+            await bot.send_message(chat_id=callback.from_user.id, text=f"Порой на рынке встречаются крайне неприятные продавцы, что поделаешь!\nИзучи этот материал, это позволит тебе в будущем избежать подобных ошибок:", 
+                                reply_markup=get_video_link("https://www.youtube.com/watch?v=Cy0MmA1o1uY"))
+            await WorkStates.ready.set()
+            
+        elif callback.data == "client":
+            await bot.send_message(chat_id=callback.from_user.id, text=f"Порой на рынке встречаются крайне неприятные покупатели, что поделаешь!\nИзучи этот материал, это позволит тебе в будущем избежать подобных ошибок:", 
+                                reply_markup=get_video_link("https://www.youtube.com/watch?v=Cy0MmA1o1uY"))
+            await WorkStates.ready.set()
+            
+        elif callback.data == "depositer":
+            await bot.send_message(chat_id=callback.from_user.id, text=f"Порой нам попадаются совсем неприятные клиенты, что поделаешь!\nИзучи этот материал, это позволит тебе в будущем избежать подобных ошибок:", 
+                                reply_markup=get_video_link("https://www.youtube.com/watch?v=Cy0MmA1o1uY"))
+            await WorkStates.ready.set()
+            
+        elif callback.data == "meeter":
+            await bot.send_message(chat_id=callback.from_user.id, text=f"Многие потенциальные продавцы просто не могут адекватно презентовать свою недвижимость, что поделаешь!\nИзучи этот материал, это позволит тебе в будущем избежать подобных ошибок:", 
+                                reply_markup=get_video_link("https://www.youtube.com/watch?v=Cy0MmA1o1uY"))
+            await WorkStates.ready.set()
+            
+        elif callback.data == "nb":
+            await bot.send_message(chat_id=callback.from_user.id, text=f"Иногда попадаются просто безответственные продавцы, не хочется иметь с ними дело!\nИзучи этот материал, это позволит тебе в будущем избежать подобных ошибок:", 
+                                reply_markup=get_video_link("https://www.youtube.com/watch?v=Cy0MmA1o1uY"))
+            await WorkStates.ready.set()
+
+        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=7), kwargs=tmpKwargs)
+        scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
+        
+    elif callback.data == "other":
+        s = ""
+        for item in why_bad_str_list:
+            s += f"\n{item}) {why_bad_str_list[item][0]}"
+        await bot.send_message(chat_id=callback.from_user.id, text=f"Давай посмотрим, что я могу предложить вам изучить, чтобы набраться теоретических знаний:\n{s}")
+        await bot.send_message(chat_id=callback.from_user.id, text="Напиши какyю тему ты бы хотел просмотреть:")
+        await WorkStates.deal_result_bad_list.set()
+
+
+# если плохо -> дрyгое
+@dp.message_handler(lambda msg: msg.text.isdigit(), state=WorkStates.deal_result_bad_list)
+async def enter_why_deal_bad_others(msg: types.Message, state: FSMContext):
+    res = "Боюсь я не нашел нужной информации по этой теме, подсказать что-то еще?"
+    try:
+        res = why_bad_str_list[int(msg.text)][0]
+        kb = types.InlineKeyboardMarkup(row_width=1)
+        vb = types.InlineKeyboardButton(text='Смотреть материал 🎥', url=why_bad_str_list[int(msg.text)][1])
+        kb.add(vb)
+        await msg.answer(f"Обязательно повтори этот материал, это поможет тебе в будущем избежать подобных ошибок. Я в тебя верю!\n\n{res}", reply_markup=kb)
+        await WorkStates.ready.set()
+
+        tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=datetime.now() + timedelta(seconds=7), kwargs=tmpKwargs)
+        scheduler_list[msg.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
+        
+    except:
+        await msg.answer("Ошибка! Боюсь я не нашел в моем списке такого пункта, попробуйте еще раз!")
+
+
+# все понятно или повторить?
+@dp.message_handler(lambda msg: msg.text in ["Спасибо, все понятно", "Нужна еще информация"], state=WorkStates.is_all_materials_ok)
+async def is_all_materials_ok_handler(msg: types.Message, state: FSMContext):
+    if msg.text == "Спасибо, все понятно":
+        await msg.answer("Рад, что смог помочь тебе повысить уровень знаний в профессиональной сфере!")
+        await WorkStates.ready.set()
+    elif msg.text == "Нужна еще информация":
+        s = ""
+        for item in why_bad_str_list:
+            s += f"\n{item}) {why_bad_str_list[item][0]}"
+        await msg.answer(f"Конечно, давай посмотрим, что еще я могу предложить вам изучить, чтобы набраться теоретических знаний:\n{s}")
+        await msg.answer("Напиши какyю тему ты бы хотел просмотреть:")
+        await WorkStates.deal_result_bad_list.set()
+        
+
 # результат сделки
 @dp.message_handler(lambda msg: msg.text in ["Хорошо", "Плохо"], state=WorkStates.deal_retult)
 async def enter_deal_result(msg: types.Message, state: FSMContext):
@@ -434,7 +510,8 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
         await WorkStates.ready.set()
     elif msg.text == "Плохо":
         await msg.answer(generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
-        await msg.answer(text="Вот возможные причины вашей неудачи:\n\n...\n\nВведи номер темы:")
+        await msg.answer(text="Давайте разберемся, что могло пойти не так!", reply_markup=types.ReplyKeyboardRemove())
+        await msg.answer(text="Выберите проблему:", reply_markup=get_bed_result(from_state=WorkStates.deal_retult))
         await WorkStates.deal_why_bad_result.set()
 
 
@@ -453,7 +530,7 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
         await WorkStates.ready.set()
     elif msg.text == "Плохо":
         await msg.answer(generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
-        await msg.answer(text="Вот возможные причины вашей неудачи:\n\n...\n\nВведи номер темы:")
+        await msg.answer(text="Выберите проблему:", reply_markup=get_bed_result(from_state=WorkStates.show_result))
         await WorkStates.deal_why_bad_result.set()
 
 
@@ -472,7 +549,7 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
         await WorkStates.ready.set()
     elif msg.text == "Плохо":
         await msg.answer(generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
-        await msg.answer(text="Вот возможные причины вашей неудачи:\n\n...\n\nВведи номер темы:")
+        await msg.answer(text="Выберите проблему:", reply_markup=get_bed_result(from_state=WorkStates.deposit_result))
         await WorkStates.deal_why_bad_result.set()
 
 
@@ -491,7 +568,7 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
         await WorkStates.ready.set()
     elif msg.text == "Плохо":
         await msg.answer(generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
-        await msg.answer(text="Вот возможные причины вашей неудачи:\n\n...\n\nВведи номер темы:")
+        await msg.answer(text="Выберите проблему:", reply_markup=get_bed_result(from_state=WorkStates.meet_new_object_result))
         await WorkStates.deal_why_bad_result.set()
 
 

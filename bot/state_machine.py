@@ -15,10 +15,12 @@ class WorkStates(StatesGroup):
     deal_retult = State()
     deal_bad_result = State()
     deal_why_bad_result = State()
+    deal_result_bad_list = State()
     show_result = State()
     deposit_result = State()
-
     meet_new_object_result = State()
+
+    is_all_materials_ok = State()
 
     no_work_type = State()
     enter_days_ill_or_rest = State()

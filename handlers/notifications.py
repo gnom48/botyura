@@ -90,17 +90,35 @@ async def morning_notifications(chat_id: int, bot: Bot, text: str, state: State,
         await state.set()
 
 
-def get_total_statistics(currentWorkerId: int) -> str:
-    results = Report.get_or_none(Report.rielter_id == currentWorkerId)
+# статистики еженедельная
+def get_week_statistics(currentWorkerId: int) -> str:
+    results = WeekReport.get_or_none(WeekReport.rielter_id == currentWorkerId)
     if results:
         tmp = Rielter.get_or_none(Rielter.rielter_id == currentWorkerId)
         if tmp:
-            results_str = f"Долгосрочная статистика сотрудника {tmp.fio} (#{currentWorkerId}):\n"
-            results_str += f"\nзвонков: {results.total_cold_call_count} \nвыездов на осмотры: {results.total_meet_new_objects}" \
-                + f"\nаналитика: {results.total_analytics} \nподписано контрактов: {results.total_contrects_signed}" \
-                + f"\nпоказано объектов: {results.total_show_objects} \nрасклеено объявлений: {results.total_posting_adverts}" \
-                + f"\nклиентов готовых подписать договор: {results.total_take_in_work} \nклиентов внесли залог: {results.total_take_deposit_count}" \
-                + f"\nзавершено сделок: {results.total_deals_count}"
+            results_str = f"Статистика сотрудника {tmp.fio} (#{currentWorkerId}) за последнюю рабочую неделю:\n"
+            results_str += f"\nзвонков: {results.cold_call_count} \nвыездов на осмотры: {results.meet_new_objects}" \
+                + f"\nаналитика: {results.analytics} \nподписано контрактов: {results.contrects_signed}" \
+                + f"\nпоказано объектов: {results.show_objects} \nрасклеено объявлений: {results.posting_adverts}" \
+                + f"\nклиентов готовых подписать договор: {results.take_in_work} \nклиентов внесли залог: {results.take_deposit_count}" \
+                + f"\nзавершено сделок: {results.deals_count}"
+        else:
+            results_str = "Нет статистики по этому сотруднику!"
+        return results_str
+
+
+# статистики ежемесячная
+def get_month_statistics(currentWorkerId: int) -> str:
+    results = MonthReport.get_or_none(MonthReport.rielter_id == currentWorkerId)
+    if results:
+        tmp = Rielter.get_or_none(Rielter.rielter_id == currentWorkerId)
+        if tmp:
+            results_str = f"Статистика сотрудника {tmp.fio} (#{currentWorkerId}) за последний месяц работы:\n"
+            results_str += f"\nзвонков: {results.cold_call_count} \nвыездов на осмотры: {results.meet_new_objects}" \
+                + f"\nаналитика: {results.analytics} \nподписано контрактов: {results.contrects_signed}" \
+                + f"\nпоказано объектов: {results.show_objects} \nрасклеено объявлений: {results.posting_adverts}" \
+                + f"\nклиентов готовых подписать договор: {results.take_in_work} \nклиентов внесли залог: {results.take_deposit_count}" \
+                + f"\nзавершено сделок: {results.deals_count}"
         else:
             results_str = "Нет статистики по этому сотруднику!"
         return results_str
@@ -123,28 +141,46 @@ async def good_evening_notification(chat_id: int, bot: Bot):
             + f"\nпоказано объектов: {day_results.show_objects} \nрасклеено объявлений: {day_results.posting_adverts}" \
             + f"\nклиентов готовых подписать договор: {day_results.take_in_work} \nклиентов внесли залог: {day_results.take_deposit_count}" \
             + f"\nзавершено сделок: {day_results.deals_count}"
-    # dop_res: str = "" # TODO: похвалить по категориям
-    # if day_results.cold_call_count >= 5:
+        
+        # dop_res: str = "" # TODO: похвалить по категориям
+        # if day_results.cold_call_count >= 5:
 
-    # if day_results.meet_new_objects >= 2:
-    # if day_results.show_objects >= 
-    # if day_results.posting_adverts >= 10:
-    # if day_results.ready_deposit_count
-    # if day_results.take_deposit_count
-    # if day_results.deals_count
+        # if day_results.meet_new_objects >= 2:
+        # if day_results.show_objects >= 
+        # if day_results.posting_adverts >= 10:
+        # if day_results.ready_deposit_count
+        # if day_results.take_deposit_count
+        # if day_results.deals_count
 
-        day_results.total_cold_call_count += day_results.cold_call_count
-        day_results.total_meet_new_objects  += day_results.meet_new_objects
-        day_results.total_take_in_work  += day_results.take_in_work
-        day_results.total_contrects_signed  += day_results.contrects_signed
-        day_results.total_show_objects  += day_results.show_objects
-        day_results.total_posting_adverts  += day_results.posting_adverts
-        day_results.total_take_deposit_count  += day_results.take_deposit_count
-        day_results.total_deals_count  += day_results.deals_count
-        day_results.total_analytics  += day_results.analytics
-        day_results.save()
-    else:
-        Report.create(rielter_id=chat_id).save()
+        week_result = WeekReport.get_or_none(WeekReport.rielter_id == chat_id)
+        if week_result:
+            week_result.cold_call_count += day_results.cold_call_count
+            week_result.meet_new_objects += day_results.meet_new_objects
+            week_result.take_in_work += day_results.take_in_work
+            week_result.contrects_signed += day_results.contrects_signed
+            week_result.show_objects += day_results.show_objects
+            week_result.posting_adverts += day_results.posting_adverts
+            week_result.take_deposit_count += day_results.take_deposit_count
+            week_result.deals_count += day_results.deals_count
+            week_result.analytics += day_results.analytics
+            week_result.save()
+        else:
+            WeekReport.create(rielter_id=chat_id).save()
+            
+        month_result = WeekReport.get_or_none(WeekReport.rielter_id == chat_id)
+        if month_result:
+            month_result.cold_call_count += day_results.cold_call_count
+            month_result.meet_new_objects += day_results.meet_new_objects
+            month_result.take_in_work += day_results.take_in_work
+            month_result.contrects_signed += day_results.contrects_signed
+            month_result.show_objects += day_results.show_objects
+            month_result.posting_adverts += day_results.posting_adverts
+            month_result.take_deposit_count += day_results.take_deposit_count
+            month_result.deals_count += day_results.deals_count
+            month_result.analytics += day_results.analytics
+            month_result.save()
+        else:
+            WeekReport.create(rielter_id=chat_id).save()
 
     worker = Rielter.get_by_id(pk=chat_id)
 

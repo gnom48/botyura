@@ -47,16 +47,54 @@ class Report(BaseModel):
     take_deposit_count = IntegerField(default=0)
     deals_count = IntegerField(default=0)
     analytics = IntegerField(default=0)
-    
-    total_cold_call_count = IntegerField(default=0)
-    total_meet_new_objects = IntegerField(default=0)
-    total_take_in_work = IntegerField(default=0)
-    total_contrects_signed = IntegerField(default=0)
-    total_show_objects = IntegerField(default=0)
-    total_posting_adverts = IntegerField(default=0)
-    total_take_deposit_count = IntegerField(default=0)
-    total_deals_count = IntegerField(default=0)
-    total_analytics = IntegerField(default=0)
+
+    bad_seller_count = IntegerField(default=0)
+    bad_object_count = IntegerField(default=0)
+    bad_client_count = IntegerField(default=0)
+
+
+class WeekReport(BaseModel):
+
+    class Meta:
+        db_table = "WeekReports"
+
+    rielter_id = ForeignKeyField(Rielter)
+
+    cold_call_count = IntegerField(default=0)
+    meet_new_objects = IntegerField(default=0)
+    take_in_work = IntegerField(default=0)
+    contrects_signed = IntegerField(default=0)
+    show_objects = IntegerField(default=0)
+    posting_adverts = IntegerField(default=0)
+    take_deposit_count = IntegerField(default=0)
+    deals_count = IntegerField(default=0)
+    analytics = IntegerField(default=0)
+
+    bad_seller_count = IntegerField(default=0)
+    bad_object_count = IntegerField(default=0)
+    bad_client_count = IntegerField(default=0)
+
+
+class MonthReport(BaseModel):
+
+    class Meta:
+        db_table = "MonthReports"
+
+    rielter_id = ForeignKeyField(Rielter)
+
+    cold_call_count = IntegerField(default=0)
+    meet_new_objects = IntegerField(default=0)
+    take_in_work = IntegerField(default=0)
+    contrects_signed = IntegerField(default=0)
+    show_objects = IntegerField(default=0)
+    posting_adverts = IntegerField(default=0)
+    take_deposit_count = IntegerField(default=0)
+    deals_count = IntegerField(default=0)
+    analytics = IntegerField(default=0)
+
+    bad_seller_count = IntegerField(default=0)
+    bad_object_count = IntegerField(default=0)
+    bad_client_count = IntegerField(default=0)
 
 
 class Task(BaseModel):
@@ -69,7 +107,6 @@ class Task(BaseModel):
     task_deskription = TextField(default="")
     date_planed = DateField(default="")
     
-
 
 def create_db():
     db.connect()
@@ -85,5 +122,12 @@ def create_db():
     if not Report.table_exists():
         db.create_tables([Report])
 
+    if not MonthReport.table_exists():
+        db.create_tables([MonthReport])
+        
+    if not WeekReport.table_exists():
+        db.create_tables([WeekReport])
+
     if not Task.table_exists():
         db.create_tables([Task])
+    
