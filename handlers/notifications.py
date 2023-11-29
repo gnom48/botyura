@@ -24,13 +24,13 @@ async def counter_time(chat_id: int, bot: Bot) -> None:
     else:
         return
     
-    await asyncio.sleep(10) # 3600 - 1 час
+    await asyncio.sleep(20) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
         await bot.send_message(chat_id=chat_id, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя дела?")
     else:
         return
     
-    await asyncio.sleep(10) # 3600 - 1 час
+    await asyncio.sleep(30) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
         await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} (#{chat_id}) не отвечает на сообщения уже 3 часа!")
         await bot.send_message(chat_id=chat_id, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
@@ -63,6 +63,8 @@ async def morning_notifications(chat_id: int, bot: Bot, text: str, state: State,
         tmp.take_deposit_count = 0
         tmp.deals_count = 0
         tmp.analytics = 0
+        tmp.bad_seller_count = 0
+        tmp.bad_object_count = 0
         tmp.save()
     else:
         Report.create(rielter_id=chat_id).save()
@@ -101,7 +103,9 @@ def get_week_statistics(currentWorkerId: int) -> str:
                 + f"\nаналитика: {results.analytics} \nподписано контрактов: {results.contrects_signed}" \
                 + f"\nпоказано объектов: {results.show_objects} \nрасклеено объявлений: {results.posting_adverts}" \
                 + f"\nклиентов готовых подписать договор: {results.take_in_work} \nклиентов внесли залог: {results.take_deposit_count}" \
-                + f"\nзавершено сделок: {results.deals_count}"
+                + f"\nзавершено сделок: {results.deals_count}\n" \
+                + f"\nнарвался на плохих продавцов / клиентов: {results.bad_seller_count}" \
+                + f"\nнарвался на плохие объекты: {results.bad_object_count}"
         else:
             results_str = "Нет статистики по этому сотруднику!"
         return results_str
@@ -109,7 +113,7 @@ def get_week_statistics(currentWorkerId: int) -> str:
 
 # статистики ежемесячная
 def get_month_statistics(currentWorkerId: int) -> str:
-    results = MonthReport.get_or_none(MonthReport.rielter_id == currentWorkerId)
+    results = Report.get_or_none(Report.rielter_id == currentWorkerId)
     if results:
         tmp = Rielter.get_or_none(Rielter.rielter_id == currentWorkerId)
         if tmp:
@@ -118,7 +122,9 @@ def get_month_statistics(currentWorkerId: int) -> str:
                 + f"\nаналитика: {results.analytics} \nподписано контрактов: {results.contrects_signed}" \
                 + f"\nпоказано объектов: {results.show_objects} \nрасклеено объявлений: {results.posting_adverts}" \
                 + f"\nклиентов готовых подписать договор: {results.take_in_work} \nклиентов внесли залог: {results.take_deposit_count}" \
-                + f"\nзавершено сделок: {results.deals_count}"
+                + f"\nзавершено сделок: {results.deals_count}\n" \
+                + f"\nнарвался на плохих продавцов / клиентов: {results.bad_seller_count}" \
+                + f"\nнарвался на плохие объекты: {results.bad_object_count}"
         else:
             results_str = "Нет статистики по этому сотруднику!"
         return results_str
@@ -140,7 +146,9 @@ async def good_evening_notification(chat_id: int, bot: Bot):
             + f"\nаналитика: {day_results.analytics} \nподписано контрактов: {day_results.contrects_signed}" \
             + f"\nпоказано объектов: {day_results.show_objects} \nрасклеено объявлений: {day_results.posting_adverts}" \
             + f"\nклиентов готовых подписать договор: {day_results.take_in_work} \nклиентов внесли залог: {day_results.take_deposit_count}" \
-            + f"\nзавершено сделок: {day_results.deals_count}"
+            + f"\nзавершено сделок: {day_results.deals_count}\n" \
+            + f"\nнарвался на плохих продавцов / клиентов: {day_results.bad_seller_count}" \
+            + f"\nнарвался на плохие объекты: {day_results.bad_object_count}"
         
         # dop_res: str = "" # TODO: похвалить по категориям
         # if day_results.cold_call_count >= 5:
@@ -163,6 +171,8 @@ async def good_evening_notification(chat_id: int, bot: Bot):
             week_result.take_deposit_count += day_results.take_deposit_count
             week_result.deals_count += day_results.deals_count
             week_result.analytics += day_results.analytics
+            week_result.bad_seller_count += day_results.bad_seller_count
+            week_result.bad_object_count += day_results.bad_object_count
             week_result.save()
         else:
             WeekReport.create(rielter_id=chat_id).save()
@@ -178,6 +188,8 @@ async def good_evening_notification(chat_id: int, bot: Bot):
             month_result.take_deposit_count += day_results.take_deposit_count
             month_result.deals_count += day_results.deals_count
             month_result.analytics += day_results.analytics
+            month_result.bad_seller_count += day_results.bad_seller_count
+            month_result.bad_object_count += day_results.bad_object_count
             month_result.save()
         else:
             WeekReport.create(rielter_id=chat_id).save()

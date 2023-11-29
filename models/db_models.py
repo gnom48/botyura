@@ -50,7 +50,6 @@ class Report(BaseModel):
 
     bad_seller_count = IntegerField(default=0)
     bad_object_count = IntegerField(default=0)
-    bad_client_count = IntegerField(default=0)
 
 
 class WeekReport(BaseModel):
@@ -72,7 +71,6 @@ class WeekReport(BaseModel):
 
     bad_seller_count = IntegerField(default=0)
     bad_object_count = IntegerField(default=0)
-    bad_client_count = IntegerField(default=0)
 
 
 class MonthReport(BaseModel):
@@ -94,7 +92,6 @@ class MonthReport(BaseModel):
 
     bad_seller_count = IntegerField(default=0)
     bad_object_count = IntegerField(default=0)
-    bad_client_count = IntegerField(default=0)
 
 
 class Task(BaseModel):

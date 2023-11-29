@@ -55,7 +55,7 @@ def get_bed_result(from_state: State) -> InlineKeyboardButton:
     buttons.append(InlineKeyboardButton("Продавец не явился", callback_data="nb"))
     buttons.append(InlineKeyboardButton("Другое", callback_data="other"))
 
-    inline_markup = InlineKeyboardMarkup(row_width=3)
+    inline_markup = InlineKeyboardMarkup(row_width=1)
     inline_markup.add(*buttons)
 
     return inline_markup
