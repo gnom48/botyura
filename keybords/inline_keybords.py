@@ -41,18 +41,27 @@ def get_inline_menu_markup() -> InlineKeyboardMarkup:
 
 # почему плохо
 def get_bed_result(from_state: State) -> InlineKeyboardButton:
-    buttons = [
-        InlineKeyboardButton("Объект плохой", callback_data="object"),
-    ]
-    if from_state == state_machine.WorkStates.deal_retult:
-        buttons.append(InlineKeyboardButton("Продавец мудак", callback_data="saller"))
-    elif from_state == state_machine.WorkStates.show_result:
-        buttons.append(InlineKeyboardButton("Покупатель мудак", callback_data="client"))
-    elif from_state == state_machine.WorkStates.deposit_result:
-        buttons.append(InlineKeyboardButton("Клиент мудак", callback_data="depositer"))
-    elif from_state == state_machine.WorkStates.meet_new_object_result:
-        buttons.append(InlineKeyboardButton("Презентер мудак", callback_data="meeter"))
-    buttons.append(InlineKeyboardButton("Продавец не явился", callback_data="nb"))
+    buttons = []
+    if from_state == state_machine.WorkStates.deal_retult: # сделка
+        buttons.append(InlineKeyboardButton(text="Сделку перенесли", callback_data="Сделку перенесли"))
+        buttons.append(InlineKeyboardButton(text="Клиент передумал", callback_data="Клиент передумал"))
+
+    elif from_state == state_machine.WorkStates.show_result: # показ
+        buttons.append(InlineKeyboardButton("Покупатель привередливый", callback_data="Покупатель привередливый"))
+        buttons.append(InlineKeyboardButton("Встреча не состоялась", callback_data="Встреча не состоялась"))
+        buttons.append(InlineKeyboardButton("Объект не понравился", callback_data="Объект не понравился"))
+
+    elif from_state == state_machine.WorkStates.deposit_result: # задаток
+        buttons.append(InlineKeyboardButton("Задаток перенесен", callback_data="Задаток перенесен"))
+        buttons.append(InlineKeyboardButton("Задаток сорвался", callback_data="Задаток сорвался"))
+
+    elif from_state == state_machine.WorkStates.meet_new_object_result: # встреча
+        buttons.append(InlineKeyboardButton("Продавец привередливый", callback_data="Продавец привередливый"))
+
+    elif from_state == state_machine.WorkStates.analytics_result or from_state == state_machine.WorkStates.search_result: # аналитика и поиск
+        buttons.append(InlineKeyboardButton("Посмотреть материалы для аналитики", callback_data="get_materials_analytics"))
+        buttons.append(InlineKeyboardButton("Посмотреть материалы для поиска", callback_data="get_materials_search"))
+    
     buttons.append(InlineKeyboardButton("Другое", callback_data="other"))
 
     inline_markup = InlineKeyboardMarkup(row_width=1)
@@ -66,5 +75,24 @@ def get_video_link(link: str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=1)
     vb = InlineKeyboardButton(text='Смотреть материал 🎥', url=link)
     kb.add(vb)
+
+    return kb
+
+
+# кнопка-старт
+def get_start_button() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    vb = InlineKeyboardButton(text="Старт регистрации", callback_data="Старт регистрации")
+    kb.add(vb)
+
+    return kb
+
+
+# подписан ли договор
+def get_is_signed_markup() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    vb1 = InlineKeyboardButton(text="Подписали договор", callback_data="signed"),
+    vb2 = InlineKeyboardButton(text="Договор НЕ подписан", callback_data="unsigned"),
+    kb.add(vb1, vb2)
 
     return kb
