@@ -30,11 +30,17 @@ def get_inline_menu_markup() -> InlineKeyboardMarkup:
         InlineKeyboardButton(emojize(":newspaper: Расклейка"), callback_data="flyer"),
         InlineKeyboardButton(emojize("📈Сделка"), callback_data="deal"),
         InlineKeyboardButton(emojize(":money_bag: Задаток"), callback_data="deposit"),
-        InlineKeyboardButton(emojize("🥴Не могу работать"), callback_data="no_work"),
+        InlineKeyboardButton(emojize("📚База знаний"), callback_data="d_base"),
+        InlineKeyboardButton(emojize("🥴Не могу работать"), callback_data="no_work")
     ]
 
-    inline_markup = InlineKeyboardMarkup(row_width=2)
-    inline_markup.add(*buttons)
+    inline_markup = InlineKeyboardMarkup()
+    
+    for i in range(0, 8, 2): # добавляем первые 4 строки по 2 кнопке в каждой строке
+        inline_markup.add(buttons[i], buttons[i+1])
+
+    for i in range(8, 10): # добавляем последние 2 строки по 1 кнопке в каждой строке
+        inline_markup.add(buttons[i])
 
     return inline_markup
 
@@ -57,6 +63,7 @@ def get_bed_result(from_state: State) -> InlineKeyboardButton:
 
     elif from_state == state_machine.WorkStates.meet_new_object_result: # встреча
         buttons.append(InlineKeyboardButton("Продавец привередливый", callback_data="Продавец привередливый"))
+        buttons.append(InlineKeyboardButton("Объект плохой", callback_data="Объект не понравился"))
 
     elif from_state == state_machine.WorkStates.analytics_result or from_state == state_machine.WorkStates.search_result: # аналитика и поиск
         buttons.append(InlineKeyboardButton("Посмотреть материалы для аналитики", callback_data="get_materials_analytics"))
@@ -91,8 +98,9 @@ def get_start_button() -> InlineKeyboardMarkup:
 # подписан ли договор
 def get_is_signed_markup() -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=1)
-    vb1 = InlineKeyboardButton(text="Подписали договор", callback_data="signed"),
-    vb2 = InlineKeyboardButton(text="Договор НЕ подписан", callback_data="unsigned"),
-    kb.add(vb1, vb2)
+    vb1 = InlineKeyboardButton(text="Подписали договор", callback_data="signed")
+    vb2 = InlineKeyboardButton(text="Договор НЕ подписан", callback_data="unsigned")
+    kb.add(vb1)
+    kb.add(vb2)
 
     return kb

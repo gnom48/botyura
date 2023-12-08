@@ -8,17 +8,18 @@ from aiogram.dispatcher.filters.state import State
 from bot import *
 import holidays
 import asyncio
+from aiogram.dispatcher import Dispatcher
 
 
 last_messages = dict() # словарь структуры { chat_id : (lasr_message_time, bool) }
 holidays_ru = {"state_holidays": {}, "birthdays": {}}
 
 
-# таймер игнора
+# таймер игнора СТАВИТЬ СТРОГО ПОСЛЕ УСТАНОВКИ СОСТОЯНИЯ
 async def counter_time(chat_id: int, bot: Bot) -> None:
     time_point = dt.now().time()
-    # if time_point > time(18, 0) or time_point < time_point(10, 0):
-    #     return
+    if time_point > time(18, 0) or time_point < time_point(10, 0):
+        return
     last_messages[chat_id] = (time_point, True)
     await asyncio.sleep(10) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
@@ -34,7 +35,7 @@ async def counter_time(chat_id: int, bot: Bot) -> None:
     
     await asyncio.sleep(30) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
-        # await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} (#{chat_id}) не отвечает на сообщения уже 3 часа!")
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} (#{chat_id}) не отвечает на сообщения уже 3 часа!")
         await bot.send_message(chat_id=chat_id, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
     else:
         return
@@ -50,7 +51,7 @@ async def send_notification(chat_id: int, bot: Bot, text: str, state: State, key
 
         
 # ежедневные утренние напоминания
-async def morning_notifications(bot: Bot):
+async def morning_notifications(bot: Bot, dp: Dispatcher):
     # ежедневный сброс счётчиков
     last_messages.clear()
 
@@ -84,6 +85,7 @@ async def morning_notifications(bot: Bot):
         except:
             pass
 
+        last_messages[tmp.rielter_id] = (dt.now().time(), True)
         await bot.send_message(chat_id=tmp.rielter_id, text=get_day_plan(Rielter.get_by_id(pk=tmp.rielter_id).rielter_type_id))
 
         # напоминания на день
@@ -93,6 +95,12 @@ async def morning_notifications(bot: Bot):
             for task in task_list:
                 tasks_str = tasks_str + f" - {task.task_name} ({task.task_deskription})\n\n"
             await bot.send_message(chat_id=tmp.rielter_id, text=tasks_str)
+        
+        await bot.send_message(chat_id=tmp.rielter_id, text=generate_main_menu_text(), reply_markup=get_inline_menu_markup())
+        # await state.set()
+        # await WorkStates.ready.set()
+        await dp.storage.set_state(user=tmp.rielter_id, state=WorkStates.ready)
+        await counter_time(chat_id=tmp.rielter_id, bot=bot)
 
 
 # статистики еженедельная
@@ -124,6 +132,20 @@ async def get_week_statistics(bot: Bot):
         results.bad_object_count = 0
         results.save()
 
+
+# статистики ежемесячная
+def get_month_statistics_str(rielter_id) -> str:
+    results = Report.get_or_none(Report.rielter_id == rielter_id)
+    tmp = Rielter.get_or_none(Rielter.rielter_id == rielter_id)
+    results_str = f"Статистика сотрудника {tmp.fio} (#{tmp.rielter_id}) за последний месяц:\n"
+    results_str += f"\nзвонков: {results.cold_call_count} \nвыездов на осмотры: {results.meet_new_objects}" \
+        + f"\nаналитика: {results.analytics} \nподписано контрактов: {results.contrects_signed}" \
+        + f"\nпоказано объектов: {results.show_objects} \nрасклеено объявлений: {results.posting_adverts}" \
+        + f"\nклиентов готовых подписать договор: {results.take_in_work} \nклиентов внесли залог: {results.take_deposit_count}" \
+        + f"\nзавершено сделок: {results.deals_count}\n" \
+        + f"\nнарвался на плохих продавцов / клиентов: {results.bad_seller_count}" \
+        + f"\nнарвался на плохие объекты: {results.bad_object_count}"
+    return results_str
 
 
 # статистики ежемесячная
@@ -163,8 +185,8 @@ async def good_evening_notification(bot: Bot):
     for rielter in Rielter.select().where(fn.strftime('%m-%d', Rielter.birthday) == (date.today() + timedelta(days=1)).strftime('%m-%d')):
         await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Напоминаю, что завтра день рождения у нашего коллеги - {rielter.fio}!\n")
     
-    # if dt.dt.now().weekday() == 5 or dt.dt.now().weekday() == 6 or dt.dt.now().date() in holidays_ru:
-    #     return
+    if dt.dt.now().weekday() == 5 or dt.dt.now().weekday() == 6 or dt.dt.now().date() in holidays_ru:
+        return
     
     dayReport = Report.select()
     day_results_str = ""
@@ -206,7 +228,7 @@ async def good_evening_notification(bot: Bot):
 
         await bot.send_message(chat_id=day_results.rielter_id, text=f"Доброе вечер! Жаль, но пора заканчивать рабочий день. \n\nДавай посмотрим, как ты потрудился сегодня: \n{day_results_str}")
         await bot.send_message(chat_id=day_results.rielter_id, text=f"{praise_sentence}", reply_markup=kb)
-        # await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {worker.fio} (#{day_results.rielter_id}) завершил рабочий день. \nОтчет: \n{day_results_str}")
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {worker.fio} (#{day_results.rielter_id}) завершил рабочий день. \nОтчет: \n{day_results_str}")
 
         week_result = WeekReport.get_or_none(WeekReport.rielter_id == day_results.rielter_id)
         if week_result:
@@ -222,10 +244,8 @@ async def good_evening_notification(bot: Bot):
             week_result.bad_seller_count += day_results.bad_seller_count
             week_result.bad_object_count += day_results.bad_object_count
             week_result.save()
-        else:
-            WeekReport.create(rielter_id=day_results.rielter_id).save()
             
-        month_result = WeekReport.get_or_none(WeekReport.rielter_id == day_results.rielter_id)
+        month_result = MonthReport.get_or_none(MonthReport.rielter_id == day_results.rielter_id)
         if month_result:
             month_result.cold_call_count += day_results.cold_call_count
             month_result.meet_new_objects += day_results.meet_new_objects
@@ -239,6 +259,4 @@ async def good_evening_notification(bot: Bot):
             month_result.bad_seller_count += day_results.bad_seller_count
             month_result.bad_object_count += day_results.bad_object_count
             month_result.save()
-        else:
-            WeekReport.create(rielter_id=day_results.rielter_id).save()
-    
+            
