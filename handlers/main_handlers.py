@@ -19,19 +19,22 @@ bot = Bot(token=TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-main_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+# main_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+main_scheduler = AsyncIOScheduler(timezone="UTC")
 main_scheduler.start()
 
-support_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-month_week_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+# support_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+# month_week_scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+support_scheduler = AsyncIOScheduler(timezone="UTC")
+month_week_scheduler = AsyncIOScheduler(timezone="UTC")
 
 # запуск утреннего и вечернего оповещения
-main_scheduler.add_job(func=morning_notifications, trigger=CronTrigger(hour=21, minute=23), kwargs={"bot": bot, "dp": dp})
-main_scheduler.add_job(func=good_evening_notification, trigger=CronTrigger(hour=18, minute=30), kwargs={"bot": bot})
+main_scheduler.add_job(func=morning_notifications, trigger=CronTrigger(hour=10-3, minute=00), kwargs={"bot": bot, "dp": dp})
+main_scheduler.add_job(func=good_evening_notification, trigger=CronTrigger(hour=18-3, minute=30), kwargs={"bot": bot})
 
 # запуск ежемесячного и еженедельного отчета
-month_week_scheduler.add_job(func=get_week_statistics, trigger='cron', day='last', hour=10, minute=30, kwargs={"bot": bot})
-month_week_scheduler.add_job(func=get_month_statistics, trigger='cron', day_of_week='mon', hour=10, minute=50, kwargs={"bot": bot})
+month_week_scheduler.add_job(func=get_week_statistics, trigger='cron', day='last', hour=10-3, minute=30, kwargs={"bot": bot})
+month_week_scheduler.add_job(func=get_month_statistics, trigger='cron', day_of_week='mon', hour=10-3, minute=50, kwargs={"bot": bot})
 
 
 support_scheduler.start()
