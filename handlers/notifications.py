@@ -18,7 +18,7 @@ holidays_ru = {"state_holidays": {}, "birthdays": {}}
 # таймер игнора СТАВИТЬ СТРОГО ПОСЛЕ УСТАНОВКИ СОСТОЯНИЯ
 async def counter_time(chat_id: int, bot: Bot) -> None:
     time_point = dt.now().time()
-    if time_point > time(18, 0) or time_point < time_point(10, 0):
+    if time_point > time(18-3, 0) or time_point < time(10-3, 0):
         return
     last_messages[chat_id] = (time_point, True)
     await asyncio.sleep(10) # 3600 - 1 час
