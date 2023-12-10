@@ -708,7 +708,7 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
     else:
         async with state.proxy() as data:
             data["rest_type"] = "больничный"
-        await msg.answer("Болеть всегда неприятно, но ты поправляйся, а я сообщю руководителю. Сколько дней тебя не тревожить?")
+        await msg.answer("Болеть всегда неприятно, но ты поправляйся, а я сообщю руководителю.\nСколько дней тебя не тревожить?")
         await WorkStates.enter_days_ill_or_rest.set()
         await counter_time(chat_id=msg.from_user.id, bot=bot)
         
@@ -735,4 +735,4 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
 @dp.message_handler(state=WorkStates.ready)
 async def talks(msg: types.Message, state: FSMContext):
     last_messages[msg.from_user.id] = (dt.now().time(), True)
-    await msg.answer("Тебе стоит выбрать какое-нибудь действие, если ты потерялся - обратись к справке /help или вашему руководителю!")
+    await msg.answer("Тебе стоит выбрать какое-нибудь действие, если ты потерялся - обратись к справке /help или своему руководителю!")
