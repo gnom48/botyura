@@ -21,19 +21,19 @@ async def counter_time(chat_id: int, bot: Bot) -> None:
     if time_point > time(18-3, 0) or time_point < time(10-3, 0):
         return
     last_messages[chat_id] = (time_point, True)
-    await asyncio.sleep(10) # 3600 - 1 час
+    await asyncio.sleep(1800) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
         await bot.send_message(chat_id=chat_id, text="Я понимаю, что ты занят, расскажи, пожалуйста, как у тебя дела?")
     else:
         return
     
-    await asyncio.sleep(20) # 3600 - 1 час
+    await asyncio.sleep(3600) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
-        await bot.send_message(chat_id=chat_id, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя дела?")
+        await bot.send_message(chat_id=chat_id, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя с делом?")
     else:
         return
     
-    await asyncio.sleep(30) # 3600 - 1 час
+    await asyncio.sleep(3600) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
         await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} (#{chat_id}) не отвечает на сообщения уже 3 часа!")
         await bot.send_message(chat_id=chat_id, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
@@ -78,7 +78,7 @@ async def morning_notifications(bot: Bot, dp: Dispatcher):
         if dt.now().weekday() == 5 or dt.now().weekday() == 6 or dt.now().date() in holidays_ru:
             if dt.now().date() in holidays_ru:
                 await bot.send_message(chat_id=tmp.rielter_id, text=f"Поздравляю с праздником! Сегодня - {holidays_ru['state_holidays'][dt.now().date()]}")
-            # return
+            return
         try:
             if dt.now().date() in holidays_ru["birthdays"][dt.now().date()]:
                 await bot.send_message(chat_id=tmp.rielter_id, text=f"От наших коллег, руководителей и от себя, поздравляю тебя с днем рождения! 🎉 Желаю вам океан счастья, гору улыбок и сверкающих моментов в этот особенный день! 🎂❤️")
