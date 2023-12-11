@@ -101,8 +101,8 @@ class Task(BaseModel):
 
     rielter_id = ForeignKeyField(Rielter)
     task_name = TextField(default="")
-    task_deskription = TextField(default="")
     date_planed = DateField(default="")
+    time_planed = TimeField(default="10:00")
     
 
 def create_db():

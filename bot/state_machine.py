@@ -36,6 +36,7 @@ class WorkStates(StatesGroup):
     task_name = State()
     task_desc = State()
     task_date = State()
+    task_time = State()
 
     enter_task_id = State()
 

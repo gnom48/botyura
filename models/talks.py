@@ -2,7 +2,7 @@ import random
 
 
 # значения по индексам что не так пошло
-why_bad_str_list = {0 : ("Тема 1", "https://www.youtube.com/watch?v=Cy0MmA1o1uY"), 1 : ("Тема 2", "https://www.youtube.com/watch?v=Cy0MmA1o1uY"), 2 : ("Тема 3", "https://www.youtube.com/watch?v=Cy0MmA1o1uY")}
+why_bad_str_list = {1 : ("Тема 1", "https://www.youtube.com/watch?v=Cy0MmA1o1uY"), 2 : ("Тема 2", "https://www.youtube.com/watch?v=Cy0MmA1o1uY"), 3 : ("Тема 3", "https://www.youtube.com/watch?v=Cy0MmA1o1uY")}
 
 
 # минимальный план на день

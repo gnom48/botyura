@@ -93,7 +93,10 @@ async def morning_notifications(bot: Bot, dp: Dispatcher):
         if len(task_list) != 0:
             tasks_str = f"Напоминаю, что на сегодня вы запланировали:\n\n"
             for task in task_list:
-                tasks_str = tasks_str + f" - {task.task_name} ({task.task_deskription})\n\n"
+                if tmp.rielter_id == task.rielter_id:
+                    tasks_str = tasks_str + f" - {task.task_name}\n\n" 
+                    # TODO: сюда напоминания на сегодняшний день
+                    Task.delete().where(Task.id == task.id).execute()
             await bot.send_message(chat_id=tmp.rielter_id, text=tasks_str)
         
         await bot.send_message(chat_id=tmp.rielter_id, text=generate_main_menu_text(), reply_markup=get_inline_menu_markup())
@@ -116,7 +119,7 @@ async def get_week_statistics(bot: Bot):
             + f"\nзавершено сделок: {results.deals_count}\n" \
             + f"\nнарвался на плохих продавцов / клиентов: {results.bad_seller_count}" \
             + f"\nнарвался на плохие объекты: {results.bad_object_count}"
-        await bot.send_message(chat_id=tmp.rielter_id, text=results_str)
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=results_str)
 
         results.cold_call_count = 0
         results.meet_new_objects = 0
@@ -161,7 +164,7 @@ async def get_month_statistics(bot: Bot):
             + f"\nзавершено сделок: {results.deals_count}\n" \
             + f"\nнарвался на плохих продавцов / клиентов: {results.bad_seller_count}" \
             + f"\nнарвался на плохие объекты: {results.bad_object_count}"
-        await bot.send_message(chat_id=tmp.rielter_id, text=results_str)
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=results_str)
 
         results.cold_call_count = 0
         results.meet_new_objects = 0
@@ -226,7 +229,7 @@ async def good_evening_notification(bot: Bot):
 
         worker = Rielter.get_by_id(pk=day_results.rielter_id)
 
-        await bot.send_message(chat_id=day_results.rielter_id, text=f"Доброе вечер! Жаль, но пора заканчивать рабочий день. \n\nДавай посмотрим, как ты потрудился сегодня: \n{day_results_str}")
+        await bot.send_message(chat_id=day_results.rielter_id, text=f"Доброе вечер! Жаль, но пора заканчивать рабочий день. \n\nДавай посмотрим, как ты потрудился сегодня:") #\n{day_results_str}")
         await bot.send_message(chat_id=day_results.rielter_id, text=f"{praise_sentence}", reply_markup=kb)
         await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {worker.fio} (#{day_results.rielter_id}) завершил рабочий день. \nОтчет: \n{day_results_str}")
 
