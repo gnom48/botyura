@@ -12,6 +12,7 @@ from datetime import timedelta
 from datetime import datetime as dt
 import re
 import random
+import asyncio
 from apscheduler.triggers.cron import CronTrigger
 
 
@@ -30,8 +31,8 @@ main_scheduler.add_job(func=morning_notifications, trigger=CronTrigger(hour=10-3
 main_scheduler.add_job(func=good_evening_notification, trigger=CronTrigger(hour=18-3, minute=30), kwargs={"bot": bot})
 
 # запуск ежемесячного и еженедельного отчета
-month_week_scheduler.add_job(func=get_week_statistics, trigger='cron', day='last', hour=10-3, minute=30, kwargs={"bot": bot})
-month_week_scheduler.add_job(func=get_month_statistics, trigger='cron', day_of_week='mon', hour=10-3, minute=50, kwargs={"bot": bot})
+month_week_scheduler.add_job(func=get_month_statistics, trigger='cron', day='last', hour=10-3, minute=30, kwargs={"bot": bot})
+month_week_scheduler.add_job(func=get_week_statistics, trigger='cron', day_of_week='mon', hour=10-3, minute=50, kwargs={"bot": bot})
 
 
 support_scheduler.start()
@@ -72,7 +73,8 @@ async def del_task_cmd(msg: types.Message, state: FSMContext):
         await bot.send_message(chat_id=msg.from_user.id, text="Вы еще не начинали никаких задач!")
         await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
 
 
 # ввод порядкового номера задачи, которую досрочно завершаем
@@ -146,9 +148,9 @@ async def enter_task_date(msg: types.Message, state: FSMContext):
     last_messages[msg.from_user.id] = (dt.now().time(), True)
     if re.match(r'\d{4}\-\d{2}\-\d{2}', msg.text):
         date_obj = dt.strptime(msg.text, '%Y-%m-%d')
-        # if date_obj <= dt.now():
-        #     await msg.answer("Напоминания можно задавать только на будущее, попробуй еще раз!", reply_markup=types.ReplyKeyboardRemove())
-        #     return
+        if date_obj <= dt.now():
+            await msg.answer("Напоминания можно задавать только на будущее, попробуй еще раз!", reply_markup=types.ReplyKeyboardRemove())
+            return
         if dt.now().date().year - date_obj.date().year > 1:
             await msg.answer("Не стоит загадывать на такой большой срок, лучше сосредоточься на настоящем! Попробуй ввести дату еще раз!", reply_markup=types.ReplyKeyboardRemove())
             return
@@ -160,7 +162,8 @@ async def enter_task_date(msg: types.Message, state: FSMContext):
         await msg.answer("Принято! Я обязательно напомню тебе в тот день в 10:00")
         await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
         await WorkStates.ready.set()
     else:
         await msg.answer("Возможно что-то с форматом даты, попробуй еще раз", reply_markup=types.ReplyKeyboardRemove())
@@ -173,7 +176,8 @@ async def start_cmd(msg: types.Message):
     last_messages[msg.from_user.id] = (dt.now().time(), True)
     await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
     await WorkStates.ready.set()
-    await counter_time(chat_id=msg.from_user.id, bot=bot)
+    # await counter_time(chat_id=msg.from_user.id, bot=bot)
+    asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
 
 
 # команда старт
@@ -190,7 +194,8 @@ async def start_cmd(msg: types.Message):
         await msg.answer(f"С возвращением, {oldRielter.fio}!", reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
         return
     await msg.answer("Привет!\nДля начала работы нажми на кнопку 'Старт регистрации'", reply_markup=get_start_button())
     await WorkStates.restart.set()
@@ -285,7 +290,8 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
         await bot.send_message(callback.from_user.id, f"Профиль сформирован!\n\nID: {profile.rielter_id},\nФИО: {profile.fio},\nДата рождения: {profile.birthday},\nПол: {profile.gender},\nНаправление работы: {Rielter_type.get_by_id(pk=profile.rielter_type).rielter_type_name}")
         await bot.send_message(callback.from_user.id, generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
-        await counter_time(chat_id=callback.from_user.id, bot=bot)
+        # await counter_time(chat_id=callback.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=callback.from_user.id, bot=bot))
 
 
 # default хэндлер для клавиатуры, которая будет доступна всегда в состоянии ready
@@ -388,7 +394,8 @@ async def enter_posting_adverts_count(msg: types.Message, state: FSMContext):
         Report.update(posting_adverts=count).where(Report.rielter_id == msg.from_user.id).execute()
     await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
     await WorkStates.ready.set()
-    await counter_time(chat_id=msg.from_user.id, bot=bot)
+    # await counter_time(chat_id=msg.from_user.id, bot=bot)
+    asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
 
 
 # количество звонков
@@ -410,7 +417,8 @@ async def enter_posting_adverts_count(msg: types.Message, state: FSMContext):
         Report.update(cold_call_count=count).where(Report.rielter_id == msg.from_user.id).execute()
     await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
     await WorkStates.ready.set()
-    await counter_time(chat_id=msg.from_user.id, bot=bot)
+    # await counter_time(chat_id=msg.from_user.id, bot=bot)
+    asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
 
 
 # вид сделки
@@ -421,7 +429,8 @@ async def enter_deal_type(msg: types.Message, state: FSMContext):
         await msg.answer(text="Отмена!", reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(text=generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
         return
 
     await WorkStates.ready.set()
@@ -549,7 +558,8 @@ async def is_all_materials_ok_handler(msg: types.Message, state: FSMContext):
         await msg.answer("Рад, что смог помочь тебе повысить уровень знаний в профессиональной сфере!", reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
     elif msg.text == "Нужна еще информация":
         s = ""
         for item in why_bad_str_list:
@@ -557,7 +567,8 @@ async def is_all_materials_ok_handler(msg: types.Message, state: FSMContext):
         await msg.answer(f"Конечно, давай посмотрим, что еще я могу предложить тебе изучить, чтобы набраться теоретических знаний:\n{s}")
         await msg.answer("Напиши порядковый номер темы, которую ты бы хотел просмотреть:", reply_markup=types.ReplyKeyboardRemove())
         await WorkStates.deal_result_bad_list.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
         
 
 # результат сделки
@@ -573,14 +584,16 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
         await msg.answer(generate_deal_related_compliment())
         await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
     elif msg.text == "Плохо":
         await msg.answer(generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(text="Давай разберемся, что могло пойти не так!", reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(text="Выбери проблему:", reply_markup=get_bed_result(from_state=WorkStates.deal_retult))
         await WorkStates.deal_why_bad_result.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
-        
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
+    
 
 # результат аналитики и поиска
 @dp.message_handler(lambda msg: msg.text in ["Хорошо", "Плохо"], state=WorkStates.analytics_result)
@@ -590,13 +603,15 @@ async def enter_analytics_result(msg: types.Message, state: FSMContext):
         await msg.answer(f"Умение анализировать рынок - важный навык для риелтора! Продолжай в том же духе!", reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(f"{generate_main_menu_text()}", reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
 
     elif msg.text == "Плохо":
         await msg.answer(generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(text="Выбери проблему:", reply_markup=get_bed_result(from_state=WorkStates.analytics_result))
         await WorkStates.deal_why_bad_result.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
         
 
 # результат показа
@@ -606,18 +621,21 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
     if msg.text == "Хорошо":
         await msg.answer(text="В итоге вы подписали договор?", reply_markup=get_is_signed_markup())
         await WorkStates.is_signed.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
     elif msg.text == "Плохо":
         await bot.send_message(chat_id=msg.from_user.id, text=generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
         await bot.send_message(chat_id=msg.from_user.id, text="Выбери проблему:", reply_markup=get_bed_result(from_state=WorkStates.show_result))
         await WorkStates.deal_why_bad_result.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
         
 
 # подписан ли договор
 @dp.callback_query_handler(state=WorkStates.is_signed)
 async def is_contract_signed(callback: types.Message, state: FSMContext):
     last_messages[callback.from_user.id] = (dt.now().time(), True)
+    await callback.answer("✓")
     if callback.data == "signed":
         tmp = Report.get_or_none(Report.rielter_id == callback.from_user.id)
         count_shows = 0
@@ -628,7 +646,8 @@ async def is_contract_signed(callback: types.Message, state: FSMContext):
             Report.update(show_objects=count_shows+1, contrects_signed=count_contrects_signed+1).where(Report.rielter_id == callback.from_user.id).execute()
         await bot.send_message(chat_id=callback.from_user.id, text="Это потрясающий успех, я в тебя всегда верил!")
         await bot.send_message(chat_id=callback.from_user.id, text=generate_main_menu_text(), reply_markup=get_inline_menu_markup())
-        await counter_time(chat_id=callback.from_user.id, bot=bot)
+        # await counter_time(chat_id=callback.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=callback.from_user.id, bot=bot))
         await WorkStates.ready.set()
 
     elif callback.data == "unsigned":
@@ -643,7 +662,8 @@ async def is_contract_signed(callback: types.Message, state: FSMContext):
         await bot.send_message(chat_id=callback.from_user.id, text = "Ладно, клиенту необходимо хорошенько подумать, давай запишем тебе напоминание!", reply_markup=types.ReplyKeyboardRemove())
         await bot.send_message(chat_id=callback.from_user.id, text = "Напиши краткое название задачи:")
         await WorkStates.task_name.set()
-        await counter_time(chat_id=callback.from_user.id, bot=bot)
+        # await counter_time(chat_id=callback.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=callback.from_user.id, bot=bot))
         
 
 # результат задатка
@@ -661,12 +681,14 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
         await msg.answer(generate_deposit_compliment())
         await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
     elif msg.text == "Плохо":
         await msg.answer(generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(text="Что пошло не так?", reply_markup=get_bed_result(from_state=WorkStates.deposit_result))
         await WorkStates.deal_why_bad_result.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
         
 
 # результат встречи 
@@ -676,13 +698,14 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
     if msg.text == "Хорошо":
         await msg.answer(text="В итоге вы подписали договор?", reply_markup=get_is_signed_markup())
         await WorkStates.is_signed.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
-
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
     elif msg.text == "Плохо":
         await msg.answer(generate_bad_meeting_or_deal(), reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(text="Выбери проблему:", reply_markup=get_bed_result(from_state=WorkStates.meet_new_object_result))
         await WorkStates.deal_why_bad_result.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
         
 
 # не могу работать
@@ -692,7 +715,8 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
     if msg.text == "Назад":
         await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
     elif msg.text == "Устал":
         await msg.answer("Конечно ты можешь отдохнуть, я напомню тебе про работу через час.")
         tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": generate_main_menu_text(), "state": WorkStates.ready, "keyboard": get_inline_menu_markup(), "timeout": True}
@@ -704,13 +728,15 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
             data["rest_type"] = "отпуск"
         await msg.answer("Отпуск - лучшее время в году! Напиши, сколько дней планируешь отдыхать, а я сообщу руководителю:")
         await WorkStates.enter_days_ill_or_rest.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
     else:
         async with state.proxy() as data:
             data["rest_type"] = "больничный"
         await msg.answer("Болеть всегда неприятно, но ты поправляйся, а я сообщю руководителю.\nСколько дней тебя не тревожить?")
         await WorkStates.enter_days_ill_or_rest.set()
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
         
 
 # сколько дней болеть или отдыхать
@@ -723,7 +749,8 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
             raise Exception()
     except Exception:
         await msg.reply("Ошибка, попробуй ввести еще раз!")
-        await counter_time(chat_id=msg.from_user.id, bot=bot)
+        # await counter_time(chat_id=msg.from_user.id, bot=bot)
+        asyncio.run(counter_time(chat_id=msg.from_user.id, bot=bot))
         return
     async with state.proxy() as data:
         await msg.answer(f"Я все понял. Не буду тревожить тебя дней: {days_count}", reply_markup=types.ReplyKeyboardRemove())
