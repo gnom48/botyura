@@ -65,6 +65,8 @@ async def morning_notifications(bot: Bot, dp: Dispatcher):
 
     reports = Report.select()
     for tmp in reports:
+        print(tmp.rielter_id)
+        
         tmp.cold_call_count = 0
         tmp.meet_new_objects = 0
         tmp.take_in_work = 0
@@ -94,30 +96,26 @@ async def morning_notifications(bot: Bot, dp: Dispatcher):
 
         # напоминания на день
         task_list: list = Task.select().where(Task.rielter_id == tmp.rielter_id)
+        tasks_str = ""
         if len(task_list) != 0:
             tasks_str = f"Напоминаю, что на сегодня ты запланировал:\n\n"
             for task in task_list:
                 if tmp.rielter_id == task.rielter_id and dt.strptime(task.date_planed, '%d-%m-%Y').date() == dt.now().date():
                     tasks_str = tasks_str + f" - {task.task_name}\n\n"
-                    print(task.time_planed)
                     time_obj: dt
                     try:
                         time_obj = dt.strptime(str(task.time_planed), '%H:%M:%S').time()
                     except:
                         continue
                     dt_tmp = dt(year=dt.now().year, month=dt.now().month, day=dt.now().day, hour=time_obj.hour, minute=time_obj.minute, second=0)
-                    if (dt_tmp - dt.now()).seconds < 3500:
-                        await bot.send_message(chat_id=tmp.rielter_id, text="Боюсь что я не могу поставить напоминание ранее, ранее чем через час! Попробуй еще раз")
-                        return
-                    print(dt_tmp - timedelta(hours=3, minutes=30))
                     tmpKwargs = {"chat_id": tmp.rielter_id, "bot": bot, "text": f"Напоминаю, что ты запланировал в {task.time_planed} заняться: {task.task_name}", "state": None, "keyboard": None, "timeout": False}
                     support_scheduler.add_job(send_notification, trigger="date", run_date=(dt_tmp - timedelta(hours=3, seconds=10)), kwargs=tmpKwargs)
                     Task.delete().where(Task.id == task.id).execute()
             await bot.send_message(chat_id=tmp.rielter_id, text=tasks_str)
-        
+
         await bot.send_message(chat_id=tmp.rielter_id, text=generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await dp.storage.set_state(user=tmp.rielter_id, state=WorkStates.ready)
-        await counter_time(chat_id=tmp.rielter_id, bot=bot)
+        # await counter_time(chat_id=tmp.rielter_id, bot=bot)
 
 
 # статистики еженедельная
