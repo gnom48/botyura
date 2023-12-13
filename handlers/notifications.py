@@ -14,6 +14,10 @@ from aiogram.dispatcher import Dispatcher
 last_messages = dict() # словарь структуры { chat_id : (lasr_message_time, bool) }
 holidays_ru = {"state_holidays": {}, "birthdays": {}}
 
+main_scheduler = AsyncIOScheduler(timezone="UTC")
+support_scheduler = AsyncIOScheduler(timezone="UTC")
+month_week_scheduler = AsyncIOScheduler(timezone="UTC")
+
 
 # таймер игнора СТАВИТЬ СТРОГО ПОСЛЕ УСТАНОВКИ СОСТОЯНИЯ
 async def counter_time(chat_id: int, bot: Bot) -> None:
@@ -89,19 +93,29 @@ async def morning_notifications(bot: Bot, dp: Dispatcher):
         await bot.send_message(chat_id=tmp.rielter_id, text=get_day_plan(Rielter.get_by_id(pk=tmp.rielter_id).rielter_type_id))
 
         # напоминания на день
-        task_list: list = Task.select().where(Task.rielter_id == tmp.rielter_id and Task.date_planed == dt.now().date())
+        task_list: list = Task.select().where(Task.rielter_id == tmp.rielter_id)
         if len(task_list) != 0:
-            tasks_str = f"Напоминаю, что на сегодня вы запланировали:\n\n"
+            tasks_str = f"Напоминаю, что на сегодня ты запланировал:\n\n"
             for task in task_list:
-                if tmp.rielter_id == task.rielter_id:
-                    tasks_str = tasks_str + f" - {task.task_name}\n\n" 
-                    # TODO: сюда напоминания на сегодняшний день
+                if tmp.rielter_id == task.rielter_id and dt.strptime(task.date_planed, '%d-%m-%Y').date() == dt.now().date():
+                    tasks_str = tasks_str + f" - {task.task_name}\n\n"
+                    print(task.time_planed)
+                    time_obj: dt
+                    try:
+                        time_obj = dt.strptime(str(task.time_planed), '%H:%M:%S').time()
+                    except:
+                        continue
+                    dt_tmp = dt(year=dt.now().year, month=dt.now().month, day=dt.now().day, hour=time_obj.hour, minute=time_obj.minute, second=0)
+                    if (dt_tmp - dt.now()).seconds < 3500:
+                        await bot.send_message(chat_id=tmp.rielter_id, text="Боюсь что я не могу поставить напоминание ранее, ранее чем через час! Попробуй еще раз")
+                        return
+                    print(dt_tmp - timedelta(hours=3, minutes=30))
+                    tmpKwargs = {"chat_id": tmp.rielter_id, "bot": bot, "text": f"Напоминаю, что ты запланировал в {task.time_planed} заняться: {task.task_name}", "state": None, "keyboard": None, "timeout": False}
+                    support_scheduler.add_job(send_notification, trigger="date", run_date=(dt_tmp - timedelta(hours=3, seconds=10)), kwargs=tmpKwargs)
                     Task.delete().where(Task.id == task.id).execute()
             await bot.send_message(chat_id=tmp.rielter_id, text=tasks_str)
         
         await bot.send_message(chat_id=tmp.rielter_id, text=generate_main_menu_text(), reply_markup=get_inline_menu_markup())
-        # await state.set()
-        # await WorkStates.ready.set()
         await dp.storage.set_state(user=tmp.rielter_id, state=WorkStates.ready)
         await counter_time(chat_id=tmp.rielter_id, bot=bot)
 
@@ -188,7 +202,7 @@ async def good_evening_notification(bot: Bot):
     for rielter in Rielter.select().where(fn.strftime('%m-%d', Rielter.birthday) == (date.today() + timedelta(days=1)).strftime('%m-%d')):
         await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Напоминаю, что завтра день рождения у нашего коллеги - {rielter.fio}!\n")
     
-    if dt.dt.now().weekday() == 5 or dt.dt.now().weekday() == 6 or dt.dt.now().date() in holidays_ru:
+    if dt.now().weekday() == 5 or dt.now().weekday() == 6 or dt.now().date() in holidays_ru:
         return
     
     dayReport = Report.select()
@@ -207,7 +221,7 @@ async def good_evening_notification(bot: Bot):
         # Звонки
         if day_results.cold_call_count < 5:
             calls_praise = "Мало! 😔 Ты должен делать минимум 5 звонков в день. Но не переживай, изучи эти материалы, и сможешь стать еще продуктивнее."
-            vb = InlineKeyboardButton(text='Про звонки 🎥', url=why_bad_str_list[0][1])
+            vb = InlineKeyboardButton(text='Про звонки 🎥', url=why_bad_str_list[1][1])
             kb.add(vb)
         elif 5 <= day_results.cold_call_count < 10:
             calls_praise = "Молодец! Продолжай в том же духе! 👍"
@@ -217,7 +231,7 @@ async def good_evening_notification(bot: Bot):
         # Расклейка
         if day_results.posting_adverts < 50:
             stickers_praise = "Плохо! Нужно больше расклеек! 😔 Давай посмотрим видео-материалы про правила расклейки, может быть ты подчерпнешь для себя что-то новое."
-            vb = InlineKeyboardButton(text='Про расклейки 🎥', url=why_bad_str_list[1][1])
+            vb = InlineKeyboardButton(text='Про расклейки 🎥', url=why_bad_str_list[2][1])
             kb.add(vb)
         elif 50 <= day_results.posting_adverts < 100:
             stickers_praise = "Молодец! Так держать! 👍"

@@ -6,7 +6,6 @@ from bot import *
 from keybords import *
 from models import *
 from .notifications import *
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from datetime import timedelta
 from datetime import datetime as dt
@@ -20,17 +19,11 @@ bot = Bot(token=TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-main_scheduler = AsyncIOScheduler(timezone="UTC")
 main_scheduler.start()
 
-support_scheduler = AsyncIOScheduler(timezone="UTC")
-month_week_scheduler = AsyncIOScheduler(timezone="UTC")
-
 # запуск утреннего и вечернего оповещения
-# main_scheduler.add_job(func=morning_notifications, trigger=CronTrigger(hour=10-3, minute=0), kwargs={"bot": bot, "dp": dp})
-# main_scheduler.add_job(func=good_evening_notification, trigger=CronTrigger(hour=18-3, minute=30), kwargs={"bot": bot})
-main_scheduler.add_job(func=morning_notifications, trigger=CronTrigger(hour=23, minute=55), kwargs={"bot": bot, "dp": dp})
-main_scheduler.add_job(func=good_evening_notification, trigger=CronTrigger(hour=23, minute=55), kwargs={"bot": bot})
+main_scheduler.add_job(func=morning_notifications, trigger=CronTrigger(hour=10-3, minute=0), kwargs={"bot": bot, "dp": dp})
+main_scheduler.add_job(func=good_evening_notification, trigger=CronTrigger(hour=18-3, minute=30), kwargs={"bot": bot})
 
 # запуск ежемесячного и еженедельного отчета
 month_week_scheduler.add_job(func=get_month_statistics, trigger='cron', day='last', hour=10-3, minute=30, kwargs={"bot": bot})
@@ -168,12 +161,11 @@ async def enter_task_date(msg: types.Message, state: FSMContext):
         async with state.proxy() as data:
             if dt.strptime(data["date_planed"], '%d-%m-%Y').date() == dt.now().date():
                 dt_tmp = dt(year=dt.now().year, month=dt.now().month, day=dt.now().day, hour=time_obj.hour, minute=time_obj.minute, second=0)
-                # if (dt_tmp - dt.now()).seconds < 3500:
-                #     await msg.answer("Боюсь что я не могу поставить напоминание ранее, ранее чем через час! Попробуй еще раз")
-                #     return
-                # FIXME: время считается правильно но ничего не отправляется
-                tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": f"Напоминаю, что ты запланировал в {msg.text} заняться: {data['task_name']}", "state": WorkStates.ready, "keyboard": None, "timeout": False}
-                support_scheduler.add_job(send_notification, trigger="date", run_date=(dt_tmp - timedelta(seconds=10)), kwargs=tmpKwargs)
+                if (dt_tmp - dt.now()).seconds < 3500:
+                    await msg.answer("Боюсь что я не могу поставить напоминание ранее, ранее чем через час! Попробуй еще раз")
+                    return
+                tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": f"Напоминаю, что ты запланировал в {msg.text} заняться: {data['task_name']}", "state": None, "keyboard": None, "timeout": False}
+                support_scheduler.add_job(send_notification, trigger="date", run_date=(dt_tmp - timedelta(hours=3, minutes=30)), kwargs=tmpKwargs)
                 await msg.answer("Принято! Я обязательно напомню тебе сегодня (за полчаса до)")
                 await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
                 await WorkStates.ready.set()
