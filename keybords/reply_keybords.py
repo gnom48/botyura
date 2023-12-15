@@ -31,7 +31,7 @@ def get_meeting_commercial_markup() -> ReplyKeyboardMarkup:
 
 
 # как прошла встреча
-def get_meeting_result_markup() -> ReplyKeyboardMarkup:
+def get_good_bed_result_markup() -> ReplyKeyboardMarkup:
     buttons = [
         KeyboardButton("Хорошо"),
         KeyboardButton("Плохо"),

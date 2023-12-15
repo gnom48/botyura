@@ -317,7 +317,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
         if tmp:
             count += tmp.analytics
             Report.update(analytics=count+1).where(Report.rielter_id == callback.from_user.id).execute()
-        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошло занятие аналитикой, уверен супер продуктивно?", "state": WorkStates.analytics_result, "keyboard": get_meeting_result_markup(), "timeout": True}
+        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошло занятие аналитикой, уверен супер продуктивно?", "state": WorkStates.analytics_result, "keyboard": get_good_bed_result_markup(), "timeout": True}
         job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Аналитика")
@@ -328,7 +328,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
 
     elif callback.data == "meeting":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, удачной поездки, скоро вернусь и спрошу как все прошло!")
-        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошла встреча?", "state": WorkStates.meet_new_object_result, "keyboard": get_meeting_result_markup(), "timeout": True}
+        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошла встреча?", "state": WorkStates.meet_new_object_result, "keyboard": get_good_bed_result_markup(), "timeout": True}
         job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Встреча")
@@ -348,7 +348,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
 
     elif callback.data == "show":
         await bot.send_message(chat_id=callback.from_user.id, text="Отлично, желаю удачного показа, скоро вернусь!")
-        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошел показ?", "state": WorkStates.show_result, "keyboard": get_meeting_result_markup(), "timeout": True}
+        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошел показ?", "state": WorkStates.show_result, "keyboard": get_good_bed_result_markup(), "timeout": True}
         job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Показ")
@@ -363,7 +363,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
             count = 0
             count += tmp.analytics
             Report.update(analytics=count+1).where(Report.rielter_id == callback.from_user.id).execute()
-        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошло занятие по поиску новых объектов, уверен супер продуктивно?", "state": WorkStates.analytics_result, "keyboard": get_meeting_result_markup(), "timeout": True}
+        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошло занятие по поиску новых объектов, уверен супер продуктивно?", "state": WorkStates.analytics_result, "keyboard": get_good_bed_result_markup(), "timeout": True}
         job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Поиск")
@@ -391,7 +391,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
 
     elif callback.data == "deposit":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, удачи. Скоро вернусь и спрошу как все прошло!")
-        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошло получение задатка?", "state": WorkStates.deposit_result, "keyboard": get_meeting_result_markup(), "timeout": True}
+        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошло получение задатка?", "state": WorkStates.deposit_result, "keyboard": get_good_bed_result_markup(), "timeout": True}
         job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Задаток")
@@ -425,9 +425,9 @@ async def enter_posting_adverts_count(msg: types.Message, state: FSMContext):
         if count < 0:
             raise Exception()
     except Exception:
-        await msg.reply("Ошибка, попробуй ввести еще раз!")
+        await msg.reply("Ошибка, попробуй ввести еще раз!", reply_markup=types.ReplyKeyboardRemove())
         return
-    await msg.answer("Расклейка объявлений играет важную роль в привлечении новых клиентов! Чем больше расклеишь, тем больше людей о нас узнают!")
+    await msg.answer("Расклейка объявлений играет важную роль в привлечении новых клиентов! Чем больше расклеишь, тем больше людей о нас узнают!", reply_markup=types.ReplyKeyboardRemove())
     tmp = Report.get_or_none(Report.rielter_id == msg.from_user.id)
     if tmp:
         count += tmp.posting_adverts
@@ -447,9 +447,9 @@ async def enter_posting_adverts_count(msg: types.Message, state: FSMContext):
         if count < 0:
             raise Exception()
     except Exception:
-        await msg.reply("Ошибка, попробуй ввести еще раз!")
+        await msg.reply("Ошибка, попробуй ввести еще раз!", reply_markup=types.ReplyKeyboardRemove())
         return
-    await msg.answer("Если клиенты не идут к нам, мы будем звонить им и звать сами!")
+    await msg.answer("Если клиенты не идут к нам, мы будем звонить им и звать сами!", reply_markup=types.ReplyKeyboardRemove())
     tmp = Report.get_or_none(Report.rielter_id == msg.from_user.id)
     if tmp:
         count += tmp.cold_call_count
@@ -472,7 +472,7 @@ async def enter_deal_type(msg: types.Message, state: FSMContext):
 
     await WorkStates.ready.set()
     await msg.answer(text=f"Отлично! Вернусь через 2 часа и спрошу как у тебя дела!", reply_markup=types.ReplyKeyboardRemove())
-    tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": f"Как прошла сделка в категории: #{msg.text} ?", "state": WorkStates.deal_retult, "keyboard": get_meeting_result_markup(), "timeout": True}
+    tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": f"Как прошла сделка в категории: #{msg.text} ?", "state": WorkStates.deal_retult, "keyboard": get_good_bed_result_markup(), "timeout": True}
     job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
     try:
         scheduler_list[msg.from_user.id][job.id] = (tmpKwargs, "Сделка")
@@ -548,7 +548,7 @@ async def enter_why_deal_bad(callback: types.CallbackQuery, state: FSMContext):
             await WorkStates.ready.set()        
 
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(minutes=20), kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
         except:
@@ -588,7 +588,7 @@ async def enter_why_deal_bad_others(msg: types.Message, state: FSMContext):
         await WorkStates.ready.set()
 
         tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(minutes=20), kwargs=tmpKwargs)
         try:
             scheduler_list[msg.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
         except:
@@ -685,15 +685,16 @@ async def is_contract_signed(callback: types.Message, state: FSMContext):
             count_shows += tmp.show_objects
             count_contrects_signed += tmp.contrects_signed
             Report.update(show_objects=count_shows+1, contrects_signed=count_contrects_signed+1).where(Report.rielter_id == callback.from_user.id).execute()
-        await bot.send_message(chat_id=callback.from_user.id, text="Это потрясающий успех, я в тебя всегда верил!")
+        await bot.send_message(chat_id=callback.from_user.id, text="Это потрясающий успех, я в тебя всегда верил!", reply_markup=types.ReplyKeyboardRemove())
         await bot.send_message(chat_id=callback.from_user.id, text=generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await counter_time(chat_id=callback.from_user.id, bot=bot)
         await WorkStates.ready.set()
 
     elif callback.data == "unsigned":
-        await bot.send_message(chat_id=callback.from_user.id, text="Значит в следующий раз точно подпишите! А пока советую посмотреть материалы по этой теме, чтобы в следующий раз быть готовом на 100%", reply_markup=get_video_link("https://www.youtube.com/watch?v=XtXbWpa_tzE"))
+        await bot.send_message(chat_id=callback.from_user.id, text="Значит в следующий раз точно подпишите!" , reply_markup=types.ReplyKeyboardRemove())
+        await bot.send_message(chat_id=callback.from_user.id, text="А пока советую посмотреть материалы по этой теме, чтобы в следующий раз быть готовом на 100%", reply_markup=get_video_link("https://www.youtube.com/watch?v=XtXbWpa_tzE"))
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(minutes=20), kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
         except:
@@ -721,7 +722,7 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
             count_deposits += tmp.take_deposit_count
             count_contrects_signed += tmp.contrects_signed
             Report.update(take_deposit_count=count_deposits+1, contrects_signed=count_contrects_signed+1).where(Report.rielter_id == msg.from_user.id).execute()
-        await msg.answer(generate_deposit_compliment())
+        await msg.answer(generate_deposit_compliment(), reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
         await counter_time(chat_id=msg.from_user.id, bot=bot)
@@ -756,7 +757,7 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
         await WorkStates.ready.set()
         await counter_time(chat_id=msg.from_user.id, bot=bot)
     elif msg.text == "Устал":
-        await msg.answer("Конечно ты можешь отдохнуть, я напомню тебе про работу через час.")
+        await msg.answer("Конечно ты можешь отдохнуть, я напомню тебе про работу через час.", reply_markup=types.ReplyKeyboardRemove())
         tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": generate_main_menu_text(), "state": WorkStates.ready, "keyboard": get_inline_menu_markup(), "timeout": True}
         job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
         try:
@@ -768,13 +769,13 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
     elif msg.text == "Отпуск":
         async with state.proxy() as data:
             data["rest_type"] = "отпуск"
-        await msg.answer("Отпуск - лучшее время в году! Напиши, сколько дней планируешь отдыхать, а я сообщу руководителю:")
+        await msg.answer("Отпуск - лучшее время в году! Напиши, сколько дней планируешь отдыхать, а я сообщу руководителю:", reply_markup=types.ReplyKeyboardRemove())
         await WorkStates.enter_days_ill_or_rest.set()
         await counter_time(chat_id=msg.from_user.id, bot=bot)
     else:
         async with state.proxy() as data:
             data["rest_type"] = "больничный"
-        await msg.answer("Болеть всегда неприятно, но ты поправляйся, а я сообщю руководителю.\nСколько дней тебя не тревожить?")
+        await msg.answer("Болеть всегда неприятно, но ты поправляйся, а я сообщю руководителю.\nСколько дней тебя не тревожить?", reply_markup=types.ReplyKeyboardRemove())
         await WorkStates.enter_days_ill_or_rest.set()
         await counter_time(chat_id=msg.from_user.id, bot=bot)
         

@@ -43,6 +43,34 @@ async def counter_time(chat_id: int, bot: Bot) -> None:
         await bot.send_message(chat_id=chat_id, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
     else:
         return
+
+   
+# таймер игнора для группы пользователей СТАВИТЬ СТРОГО ПОСЛЕ УСТАНОВКИ СОСТОЯНИЯ
+async def counter_time_group(chats: list, bot: Bot) -> None:
+    time_point = dt.now().time()
+    if time_point > time(18-3, 0) or time_point < time(10-3, 0):
+        return
+    for i in chats:
+        last_messages[i] = (time_point, True)
+    await asyncio.sleep(1800) # 3600 - 1 час
+    for i in chats:
+        if last_messages[i] == (time_point, True):
+            await bot.send_message(chat_id=i, text="Я понимаю, что ты занят, расскажи, пожалуйста, как у тебя дела?")
+        else:
+            continue
+    await asyncio.sleep(3600) # 3600 - 1 час
+    for i in chats:
+        if last_messages[i] == (time_point, True):
+            await bot.send_message(chat_id=chats, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя с делом?")
+        else:
+            continue
+    await asyncio.sleep(3600) # 3600 - 1 час
+    for i in chats:
+        if last_messages[i] == (time_point, True):
+            await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chats).fio} (#{chats}) не отвечает на сообщения уже 3 часа!")
+            await bot.send_message(chat_id=chats, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
+        else:
+            continue
     
 
 # универсальное сообщение
@@ -64,8 +92,9 @@ async def morning_notifications(bot: Bot, dp: Dispatcher):
         holidays_ru["birthdays"][rielter.birthday] = rielter.fio
 
     reports = Report.select()
+    chats = []
     for tmp in reports:
-        print(tmp.rielter_id)
+        chats.append(tmp.rielter_id)
         
         tmp.cold_call_count = 0
         tmp.meet_new_objects = 0
@@ -115,7 +144,7 @@ async def morning_notifications(bot: Bot, dp: Dispatcher):
 
         await bot.send_message(chat_id=tmp.rielter_id, text=generate_main_menu_text(), reply_markup=get_inline_menu_markup())
         await dp.storage.set_state(user=tmp.rielter_id, state=WorkStates.ready)
-        # await counter_time(chat_id=tmp.rielter_id, bot=bot)
+    await counter_time_group(chats=chats, bot=bot)
 
 
 # статистики еженедельная
