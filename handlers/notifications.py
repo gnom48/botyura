@@ -52,19 +52,19 @@ async def counter_time_group(chats: list, bot: Bot) -> None:
         return
     for i in chats:
         last_messages[i] = (time_point, True)
-    await asyncio.sleep(1800) # 3600 - 1 час
+    await asyncio.sleep(120) # 3600 - 1 час
     for i in chats:
         if last_messages[i] == (time_point, True):
             await bot.send_message(chat_id=i, text="Я понимаю, что ты занят, расскажи, пожалуйста, как у тебя дела?")
         else:
             continue
-    await asyncio.sleep(3600) # 3600 - 1 час
+    await asyncio.sleep(300) # 3600 - 1 час
     for i in chats:
         if last_messages[i] == (time_point, True):
             await bot.send_message(chat_id=chats, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя с делом?")
         else:
             continue
-    await asyncio.sleep(3600) # 3600 - 1 час
+    await asyncio.sleep(300) # 3600 - 1 час
     for i in chats:
         if last_messages[i] == (time_point, True) and not (dt.now().weekday() == 5 or dt.now().weekday() == 6 or dt.now() in holidays_ru["state_holidays"]):
             await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chats).fio} (#{chats}) не отвечает на сообщения уже 3 часа!")
