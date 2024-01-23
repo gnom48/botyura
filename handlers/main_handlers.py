@@ -12,7 +12,6 @@ from datetime import datetime as dt
 import re
 import random
 import asyncio
-from apscheduler.triggers.cron import CronTrigger
 
 
 bot = Bot(token=TOKEN)
@@ -318,7 +317,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
             count += tmp.analytics
             Report.update(analytics=count+1).where(Report.rielter_id == callback.from_user.id).execute()
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошло занятие аналитикой, уверен супер продуктивно?", "state": WorkStates.analytics_result, "keyboard": get_good_bed_result_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Аналитика")
         except:
@@ -329,7 +328,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
     elif callback.data == "meeting":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, удачной поездки, скоро вернусь и спрошу как все прошло!")
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошла встреча?", "state": WorkStates.meet_new_object_result, "keyboard": get_good_bed_result_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Встреча")
         except:
@@ -339,7 +338,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
     elif callback.data == "call":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, я вернусь через час, поитересоваться твоими успехами!")
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как твои успехи в прозвонах? Сколько рабочих звонков ты успел совершить?", "state": WorkStates.enter_calls_count, "keyboard": None, "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Прозвон")
         except:
@@ -349,7 +348,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
     elif callback.data == "show":
         await bot.send_message(chat_id=callback.from_user.id, text="Отлично, желаю удачного показа, скоро вернусь!")
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошел показ?", "state": WorkStates.show_result, "keyboard": get_good_bed_result_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Показ")
         except:
@@ -364,7 +363,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
             count += tmp.analytics
             Report.update(analytics=count+1).where(Report.rielter_id == callback.from_user.id).execute()
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошло занятие по поиску новых объектов, уверен супер продуктивно?", "state": WorkStates.analytics_result, "keyboard": get_good_bed_result_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Поиск")
         except:
@@ -374,7 +373,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
     elif callback.data == "flyer":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, я вернусь через час, поитересоваться твоими успехами!")
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как твои успехи в расклейке? Прогулялся, отдохнул, готов к работе? Сколько объявлений ты расклеил?", "state": WorkStates.enter_flyer_count, "keyboard": None, "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Расклейка")
         except:
@@ -392,7 +391,7 @@ async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
     elif callback.data == "deposit":
         await bot.send_message(chat_id=callback.from_user.id, text="Хорошо, удачи. Скоро вернусь и спрошу как все прошло!")
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Как прошло получение задатка?", "state": WorkStates.deposit_result, "keyboard": get_good_bed_result_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Задаток")
         except:
@@ -473,7 +472,7 @@ async def enter_deal_type(msg: types.Message, state: FSMContext):
     await WorkStates.ready.set()
     await msg.answer(text=f"Отлично! Вернусь через 2 часа и спрошу как у тебя дела!", reply_markup=types.ReplyKeyboardRemove())
     tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": f"Как прошла сделка в категории: #{msg.text} ?", "state": WorkStates.deal_retult, "keyboard": get_good_bed_result_markup(), "timeout": True}
-    job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+    job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_TIMEDELTA, kwargs=tmpKwargs)
     try:
         scheduler_list[msg.from_user.id][job.id] = (tmpKwargs, "Сделка")
     except:
@@ -548,7 +547,7 @@ async def enter_why_deal_bad(callback: types.CallbackQuery, state: FSMContext):
             await WorkStates.ready.set()        
 
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(minutes=20), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_SHORT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
         except:
@@ -588,7 +587,7 @@ async def enter_why_deal_bad_others(msg: types.Message, state: FSMContext):
         await WorkStates.ready.set()
 
         tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(minutes=20), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_SHORT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[msg.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
         except:
@@ -694,7 +693,7 @@ async def is_contract_signed(callback: types.Message, state: FSMContext):
         await bot.send_message(chat_id=callback.from_user.id, text="Значит в следующий раз точно подпишите!" , reply_markup=types.ReplyKeyboardRemove())
         await bot.send_message(chat_id=callback.from_user.id, text="А пока советую посмотреть материалы по этой теме, чтобы в следующий раз быть готовом на 100%", reply_markup=get_video_link("https://www.youtube.com/watch?v=XtXbWpa_tzE"))
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(minutes=20), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_SHORT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
         except:
@@ -759,7 +758,7 @@ async def enter_no_work_type(msg: types.Message, state: FSMContext):
     elif msg.text == "Устал":
         await msg.answer("Конечно ты можешь отдохнуть, я напомню тебе про работу через час.", reply_markup=types.ReplyKeyboardRemove())
         tmpKwargs = {"chat_id": msg.from_user.id, "bot": bot, "text": generate_main_menu_text(), "state": WorkStates.ready, "keyboard": get_inline_menu_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + timedelta(hours=1), kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[msg.from_user.id][job.id] = (tmpKwargs, "Отдых")
         except:
