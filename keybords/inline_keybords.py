@@ -104,3 +104,74 @@ def get_is_signed_markup() -> InlineKeyboardMarkup:
     kb.add(vb2)
 
     return kb
+
+
+# база знаний - корень
+def get_knowledge_base_root_markup() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    b = [
+        InlineKeyboardButton(text="Аналитика", callback_data="analytics"),
+        InlineKeyboardButton(text="Холодный звонок", callback_data="calls"),
+        InlineKeyboardButton(text="Возражения клиентов", callback_data="bad_clients"),
+        InlineKeyboardButton(text="Встреча", callback_data="meets"),
+        InlineKeyboardButton(text="Показ", callback_data="shows"),
+        InlineKeyboardButton(text="Договоры", callback_data="deals"),
+        InlineKeyboardButton(text="Коммерческая недвижимость", callback_data="commercial")
+    ]
+    for i in b:
+        kb.add(i)
+    return kb
+    
+
+# база знаний - раздел возражения клиентов
+def get_knowledge_base_bad_clients_markup() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    b = [
+        InlineKeyboardButton(text="Контекст", callback_data="context"),
+        InlineKeyboardButton(text="Общее правило борьбы с возражениями", callback_data="general"),
+        InlineKeyboardButton(text="Возражения при звонке", callback_data="bad_calls"),
+        InlineKeyboardButton(text="Отработка возражений", callback_data="anti_bad"),
+        InlineKeyboardButton(text="Возражения при встрече", callback_data="bad_meets")
+    ]
+    for i in b:
+        kb.add(i)
+    return kb
+    
+    
+# база знаний - раздел встречи
+def get_knowledge_base_bad_meets_markup() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    b = [
+        InlineKeyboardButton(text="Технология SMALL-TALK", callback_data="small-talk"),
+        InlineKeyboardButton(text="Технология СПИН", callback_data="spin"),
+        InlineKeyboardButton(text="Технология '3 ДА'", callback_data="3yes"),
+        InlineKeyboardButton(text="Все можно продать", callback_data="all_able")
+    ]
+    for i in b:
+        kb.add(i)
+    return kb
+
+
+# база знаний - раздел все возможно продать
+def get_knowledge_base_all_able_markup() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    b = [
+        InlineKeyboardButton(text="Цена", callback_data="price"),
+        InlineKeyboardButton(text="Хоумстейджинг", callback_data="homestaging")
+    ]
+    for i in b:
+        kb.add(i)
+    return kb
+
+
+# база знаний - раздел договоры
+def get_knowledge_base_deals_markup() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardMarkup(row_width=1)
+    b = [
+        InlineKeyboardButton(text="Эксклюзивный", callback_data="exclusive"),
+        InlineKeyboardButton(text="Поисковой", callback_data="serching"),
+        InlineKeyboardButton(text="Аукционный метод", callback_data="auction")
+    ]
+    for i in b:
+        kb.add(i)
+    return kb

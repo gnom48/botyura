@@ -41,3 +41,9 @@ class WorkStates(StatesGroup):
     enter_task_id = State()
 
     restart = State()
+
+    knowledge_base_root = State()
+    knowledge_base_bad_clients = State()
+    knowledge_base_bad_meets = State()
+    knowledge_base_all_able = State()
+    knowledge_base_base_deals = State()
