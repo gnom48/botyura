@@ -3,24 +3,21 @@ import random
 
 # значения по callback.data с ссылками на яндекс диск
 why_bad_str_list = {
-    "analytics" : "https://docs.yandex.ru/docs/view?url=ya-disk-public%3A%2F%2FeEKbL7J9%2FC8j2PCx36hCzceCa71bSGDOukmPGbaI75B8XkbgBZizZSN8ZYxOoQW9q%2FJ6bpmRyOJonT3VoXnDag%3D%3D&name=%D0%90%D0%9D%D0%90%D0%9B%D0%98%D0%A2%D0%98%D0%9A%D0%90.pdf&nosw=1", 
-    "calls" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%A5%D0%9E%D0%9B%D0%9E%D0%94%D0%9D%D0%AB%D0%98%CC%86%20%D0%97%D0%92%D0%9E%D0%9D%D0%9E%D0%9A.pdf&name=%D0%A5%D0%9E%D0%9B%D0%9E%D0%94%D0%9D%D0%AB%D0%98%CC%86%20%D0%97%D0%92%D0%9E%D0%9D%D0%9E%D0%9A.pdf&uid=1438760388&nosw=1", 
-    "shows" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%9F%D0%9E%D0%9A%D0%90%D0%97.pdf&name=%D0%9F%D0%9E%D0%9A%D0%90%D0%97.pdf&uid=1438760388&nosw=1", 
-    "commercial" : "https://www.youtube.com/shorts/0aTaq0E8hIc", 
-    "context" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%92%D0%9E%D0%97%D0%A0%D0%90%D0%96%D0%95%D0%9D%D0%98%D0%AF.pdf&name=%D0%92%D0%9E%D0%97%D0%A0%D0%90%D0%96%D0%95%D0%9D%D0%98%D0%AF.pdf&uid=1438760388&nosw=1", 
-    "general" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%92%D0%9E%D0%97%D0%A0%D0%90%D0%96%D0%95%D0%9D%D0%98%D0%AF.pdf&name=%D0%92%D0%9E%D0%97%D0%A0%D0%90%D0%96%D0%95%D0%9D%D0%98%D0%AF.pdf&uid=1438760388&nosw=1", 
-    "bad_calls" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%92%D0%9E%D0%97%D0%A0%D0%90%D0%96%D0%95%D0%9D%D0%98%D0%AF.pdf&name=%D0%92%D0%9E%D0%97%D0%A0%D0%90%D0%96%D0%95%D0%9D%D0%98%D0%AF.pdf&uid=1438760388&nosw=1", 
-    "anti_bad" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%92%D0%9E%D0%97%D0%A0%D0%90%D0%96%D0%95%D0%9D%D0%98%D0%AF.pdf&name=%D0%92%D0%9E%D0%97%D0%A0%D0%90%D0%96%D0%95%D0%9D%D0%98%D0%AF.pdf&uid=1438760388&nosw=1", 
-    "bad_meets" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%92%D0%9E%D0%97%D0%A0%D0%90%D0%96%D0%95%D0%9D%D0%98%D0%AF.pdf&name=%D0%92%D0%9E%D0%97%D0%A0%D0%90%D0%96%D0%95%D0%9D%D0%98%D0%AF.pdf&uid=1438760388&nosw=1", 
-    "small-talk" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%92%D0%A1%D0%A2%D0%A0%D0%95%D0%A7%D0%90.pdf&name=%D0%92%D0%A1%D0%A2%D0%A0%D0%95%D0%A7%D0%90.pdf&uid=1438760388&nosw=1", 
-    "meets" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%92%D0%A1%D0%A2%D0%A0%D0%95%D0%A7%D0%90.pdf&name=%D0%92%D0%A1%D0%A2%D0%A0%D0%95%D0%A7%D0%90.pdf&uid=1438760388&nosw=1", 
-    "spin" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%92%D0%A1%D0%A2%D0%A0%D0%95%D0%A7%D0%90.pdf&name=%D0%92%D0%A1%D0%A2%D0%A0%D0%95%D0%A7%D0%90.pdf&uid=1438760388&nosw=1", 
-    "3yes" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F3%20_%D0%94%D0%90_.pdf&name=3%20_%D0%94%D0%90_.pdf&uid=1438760388&nosw=1", 
-    "price" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%92%D0%A1%D0%A2%D0%A0%D0%95%D0%A7%D0%90.pdf&name=%D0%92%D0%A1%D0%A2%D0%A0%D0%95%D0%A7%D0%90.pdf&uid=1438760388&nosw=1", 
-    "homestaging" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%92%D0%A1%D0%A2%D0%A0%D0%95%D0%A7%D0%90.pdf&name=%D0%92%D0%A1%D0%A2%D0%A0%D0%95%D0%A7%D0%90.pdf&uid=1438760388&nosw=1", 
-    "exclusive" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%AD%D0%BA%D1%81%D0%BA%D0%BB%D1%8E%D0%B7%D0%B8%D0%B2%D0%BD%D1%8B%D0%B8%CC%86%20%D0%B4%D0%BE%D0%B3%D0%BE%D0%B2%D0%BE%D1%80.pdf&name=%D0%AD%D0%BA%D1%81%D0%BA%D0%BB%D1%8E%D0%B7%D0%B8%D0%B2%D0%BD%D1%8B%D0%B8%CC%86%20%D0%B4%D0%BE%D0%B3%D0%BE%D0%B2%D0%BE%D1%80.pdf&uid=1438760388&nosw=1", 
-    "serching" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%9F%D0%9E%D0%98%D0%A1%D0%9A%D0%9E%D0%92%D0%9E%D0%98%CC%86%20%D0%94%D0%9E%D0%93%D0%9E%D0%92%D0%9E%D0%A0.pdf&name=%D0%9F%D0%9E%D0%98%D0%A1%D0%9A%D0%9E%D0%92%D0%9E%D0%98%CC%86%20%D0%94%D0%9E%D0%93%D0%9E%D0%92%D0%9E%D0%A0.pdf&uid=1438760388&nosw=1", 
-    "auction" : "https://docs.yandex.ru/docs/view?url=ya-disk%3A%2F%2F%2Fdisk%2F%D0%91%D0%B0%D0%B7%D0%B0%20%D0%B7%D0%BD%D0%B0%D0%BD%D0%B8%D0%B9%2F%D0%AD%D0%BA%D1%81%D0%BA%D0%BB%D1%8E%D0%B7%D0%B8%D0%B2%D0%BD%D1%8B%D0%B8%CC%86_%D0%B4%D0%BE%D0%B3%D0%BE%D0%B2%D0%BE%D1%80_%D0%B0%D1%83%D0%BA%D1%86%D0%B8%D0%BE%D0%BD%D0%BD%D1%8B%D0%BC_%D0%BC%D0%B5%D1%82%D0%BE%D0%B4%D0%BE%D0%BC.pdf&name=%D0%AD%D0%BA%D1%81%D0%BA%D0%BB%D1%8E%D0%B7%D0%B8%D0%B2%D0%BD%D1%8B%D0%B8%CC%86_%D0%B4%D0%BE%D0%B3%D0%BE%D0%B2%D0%BE%D1%80_%D0%B0%D1%83%D0%BA%D1%86%D0%B8%D0%BE%D0%BD%D0%BD%D1%8B%D0%BC_%D0%BC%D0%B5%D1%82%D0%BE%D0%B4%D0%BE%D0%BC.pdf&uid=1438760388&nosw=1" 
+    "analytics" : "https://disk.yandex.ru/i/AnAsCJirq9_w2A", 
+    "calls" : "https://disk.yandex.ru/i/I2RbitoFIHM80g", 
+    "shows" : "https://disk.yandex.ru/i/AoO0qajb78R2iA", 
+    "context" : "https://disk.yandex.ru/i/KytgGrnN80GyfQ", 
+    "general" : "https://disk.yandex.ru/i/KytgGrnN80GyfQ", 
+    "bad_calls" : "https://disk.yandex.ru/i/KytgGrnN80GyfQ", 
+    "anti_bad" : "https://disk.yandex.ru/i/KytgGrnN80GyfQ", 
+    "bad_meets" : "https://disk.yandex.ru/i/KytgGrnN80GyfQ", 
+    "small-talk" : "https://disk.yandex.ru/i/TuVuDeona4t18A", 
+    "spin" : "https://disk.yandex.ru/i/owxcwxKSzzDyKA", 
+    "price" : "https://disk.yandex.ru/i/GF8SnVfH4es5Mg", 
+    "exclusive" : "https://disk.yandex.ru/i/XbeovgGuvziSPQ", 
+    "exclusive" : "https://disk.yandex.ru/i/Zb2Zl6tiAmZnQg", 
+    "serching" : "https://disk.yandex.ru/i/2lVl5v3cfEKcSw", 
+    "auction" : "https://disk.yandex.ru/i/Zb2Zl6tiAmZnQg"
                     }
 
 
