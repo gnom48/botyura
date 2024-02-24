@@ -66,8 +66,7 @@ def get_bed_result(from_state: State) -> InlineKeyboardButton:
         buttons.append(InlineKeyboardButton("Объект плохой", callback_data="Объект не понравился"))
 
     elif from_state == state_machine.WorkStates.analytics_result or from_state == state_machine.WorkStates.search_result: # аналитика и поиск
-        buttons.append(InlineKeyboardButton("Посмотреть материалы для аналитики", callback_data="get_materials_analytics"))
-        buttons.append(InlineKeyboardButton("Посмотреть материалы для поиска", callback_data="get_materials_search"))
+        buttons.append(InlineKeyboardButton("Посмотреть материалы по теме", callback_data="get_materials_analytics"))
     
     buttons.append(InlineKeyboardButton("Другое", callback_data="other"))
 
@@ -80,7 +79,7 @@ def get_bed_result(from_state: State) -> InlineKeyboardButton:
 # кнопка-ссылка на видео
 def get_video_link(link: str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardMarkup(row_width=1)
-    vb = InlineKeyboardButton(text='Смотреть материал 🎥', url=link)
+    vb = InlineKeyboardButton(text='Смотреть материал 📖', url=link)
     kb.add(vb)
 
     return kb

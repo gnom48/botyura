@@ -17,7 +17,8 @@ why_bad_str_list = {
     "exclusive" : "https://disk.yandex.ru/i/XbeovgGuvziSPQ", 
     "exclusive" : "https://disk.yandex.ru/i/Zb2Zl6tiAmZnQg", 
     "serching" : "https://disk.yandex.ru/i/2lVl5v3cfEKcSw", 
-    "auction" : "https://disk.yandex.ru/i/Zb2Zl6tiAmZnQg"
+    "auction" : "https://disk.yandex.ru/i/Zb2Zl6tiAmZnQg",
+    "commercial": "https://disk.yandex.ru/i/hMe_CatbwMckbQ"
                     }
 
 

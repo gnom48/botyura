@@ -195,7 +195,8 @@ async def start_cmd(msg: types.Message):
 # служебная команда для отладки
 @dp.message_handler(commands=['debug'], state="*")
 async def start_cmd(msg: types.Message, state: FSMContext):
-    await msg.answer(state.get_state())
+    await msg.answer(state.__str__())
+    await msg.answer(f"task list:\n{scheduler_list}")
 
 
 # команда старт
@@ -313,6 +314,8 @@ async def process_callback_gender(callback: types.CallbackQuery, state: FSMConte
 # default хэндлер для клавиатуры, которая будет доступна всегда в состоянии ready
 @dp.callback_query_handler(state=WorkStates.ready)
 async def start_new_activity(callback: types.CallbackQuery, state: FSMContext):
+    if callback.data not in ("analytics", "meeting", "call", "show", "search", "flyer", "deal", "deposit", "no_work", "d_base"):
+        return
     await callback.answer("✓")
     last_messages[callback.from_user.id] = (dt.now().time(), True)
     if callback.data == "analytics":
@@ -618,7 +621,7 @@ async def enter_why_deal_bad(callback: types.CallbackQuery, state: FSMContext):
     last_messages[callback.from_user.id] = (dt.now().time(), True)
     await callback.answer("✓")
     tmp = Report.get_or_none(Report.rielter_id == callback.from_user.id)
-    if callback.data in ("Объект не понравился", "Задаток сорвался", "Продавец привередливый", "Покупатель привередливый", "Встреча не состоялась", "get_materials_analytics", "get_materials_search"):
+    if callback.data in ("Объект не понравился", "Задаток сорвался", "Продавец привередливый", "Покупатель привередливый", "Встреча не состоялась", "get_materials_analytics"):
         if callback.data == "Объект не понравился":
             count = 0
             if tmp:
@@ -662,17 +665,12 @@ async def enter_why_deal_bad(callback: types.CallbackQuery, state: FSMContext):
             await WorkStates.ready.set()
 
         elif callback.data == "get_materials_analytics":
-            await bot.send_message(chat_id=callback.from_user.id, text=f"Всегда полезно самосовершенствование, особенно когда дело касается аналитики рынка!:", 
+            await bot.send_message(chat_id=callback.from_user.id, text=f"Всегда полезно самосовершенствование, особенно когда дело касается аналитики рынка или поиска новых объектов!:", 
                                 reply_markup=get_video_link(why_bad_str_list["analytics"]))
             await WorkStates.ready.set()
-            
-        elif callback.data == "get_materials_search":
-            await bot.send_message(chat_id=callback.from_user.id, text=f"Конечно, вот держи материалы, которые прояснять твои проблемы с поиском новых объектов:", 
-                                reply_markup=get_video_link(why_bad_str_list["analytics"]))
-            await WorkStates.ready.set()        
 
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
-        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_TIMEDELTA, kwargs=tmpKwargs)
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_SHORT_TIMEDELTA, kwargs=tmpKwargs)
         try:
             scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
         except:
@@ -738,7 +736,7 @@ async def enter_deal_result(msg: types.Message, state: FSMContext):
 async def enter_analytics_result(msg: types.Message, state: FSMContext):
     last_messages[msg.from_user.id] = (dt.now().time(), True)
     if msg.text == "Хорошо":
-        await msg.answer(f"Умение анализировать рынок - важный навык для риелтора! Продолжай в том же духе!", reply_markup=types.ReplyKeyboardRemove())
+        await msg.answer(f"Умение анализировать рынок и находить хорошие объекты - важные навыки для риелтора! Продолжай в том же духе!", reply_markup=types.ReplyKeyboardRemove())
         await msg.answer(f"{generate_main_menu_text()}", reply_markup=get_inline_menu_markup())
         await WorkStates.ready.set()
         await counter_time(chat_id=msg.from_user.id, bot=bot)
