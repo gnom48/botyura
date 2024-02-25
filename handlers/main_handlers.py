@@ -18,20 +18,23 @@ bot = Bot(token=TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-main_scheduler.start()
-
-# запуск утреннего и вечернего оповещения
-main_scheduler.add_job(func=morning_notifications, trigger=CronTrigger(hour=10-3, minute=0), kwargs={"bot": bot, "dp": dp})
-main_scheduler.add_job(func=good_evening_notification, trigger=CronTrigger(hour=18-3, minute=30), kwargs={"bot": bot})
-
-# запуск ежемесячного и еженедельного отчета
-month_week_scheduler.add_job(func=get_month_statistics, trigger='cron', day='last', hour=10-3, minute=30, kwargs={"bot": bot})
-month_week_scheduler.add_job(func=get_week_statistics, trigger='cron', day_of_week='mon', hour=10-3, minute=50, kwargs={"bot": bot})
-
-support_scheduler.start()
-month_week_scheduler.start()
-
 scheduler_list = dict() # словарь структуры { chat_id : { task_id : (kwargs, "занятие") } }
+last_messages = dict()
+scheduler_list = dict()
+
+# запуск 
+async def onStartServer(args) -> None:
+    # запуск утреннего и вечернего оповещения
+    main_scheduler.add_job(func=morning_notifications, trigger=CronTrigger(hour=10-3, minute=0), kwargs={"bot": bot, "dp": dp})
+    main_scheduler.add_job(func=good_evening_notification, trigger=CronTrigger(hour=18-3, minute=30), kwargs={"bot": bot})
+
+    # запуск ежемесячного и еженедельного отчета
+    month_week_scheduler.add_job(func=get_month_statistics, trigger='cron', day='last', hour=10-3, minute=30, kwargs={"bot": bot})
+    month_week_scheduler.add_job(func=get_week_statistics, trigger='cron', day_of_week='mon', hour=10-3, minute=50, kwargs={"bot": bot})
+
+    main_scheduler.start()
+    support_scheduler.start()
+    month_week_scheduler.start()
 
 
 # команда помощь
@@ -426,13 +429,29 @@ async def choose_what_bad(callback: types.CallbackQuery, state: FSMContext):
     last_messages[callback.from_user.id] = (dt.now().time(), True)
     await callback.answer("✓")
 
-    if callback.data == "analytics" or callback.data == "calls" or callback.data == "shows" or callback.data == "commercial":
+    if callback.data == "analytics" or callback.data == "shows" or callback.data == "commercial":
         kb = types.InlineKeyboardMarkup(row_width=1)
         vb = types.InlineKeyboardButton(text='Смотреть материал', url=why_bad_str_list[callback.data])
         kb.add(vb)
         await bot.send_message(callback.from_user.id, f"Вот ссылка на теоретическую информацию по твоей теме:", reply_markup=kb)
         await WorkStates.ready.set()
 
+        tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
+        job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_SHORT_TIMEDELTA, kwargs=tmpKwargs)
+        try:
+            scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
+        except:
+            scheduler_list[callback.from_user.id] = {}
+            scheduler_list[callback.from_user.id][job.id] = (tmpKwargs, "Изучение теоретических материалов")
+
+    elif callback.data == "calls":
+        kb = types.InlineKeyboardMarkup(row_width=1)
+        vb1 = types.InlineKeyboardButton(text='Смотреть видео', url=why_bad_str_list[callback.data+"_video"])
+        vb2 = types.InlineKeyboardButton(text='Читать матриалы', url=why_bad_str_list[callback.data])
+        kb.add(vb1)
+        kb.add(vb2)
+        await bot.send_message(callback.from_user.id, f"Вот ссылки на теоретическую информацию по твоей теме:", reply_markup=kb)
+        await WorkStates.ready.set()
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}
         job = support_scheduler.add_job(send_notification, trigger="date", run_date=dt.now() + SHIFT_SHORT_TIMEDELTA, kwargs=tmpKwargs)
         try:
@@ -667,6 +686,11 @@ async def enter_why_deal_bad(callback: types.CallbackQuery, state: FSMContext):
         elif callback.data == "get_materials_analytics":
             await bot.send_message(chat_id=callback.from_user.id, text=f"Всегда полезно самосовершенствование, особенно когда дело касается аналитики рынка или поиска новых объектов!:", 
                                 reply_markup=get_video_link(why_bad_str_list["analytics"]))
+            await WorkStates.ready.set()
+            
+        elif callback.data == "get_video_calls":
+            await bot.send_message(chat_id=callback.from_user.id, text=f"Всегда полезно самосовершенствование, особенно когда дело касается аналитики рынка или поиска новых объектов!:", 
+                                reply_markup=get_video_link("https://youtu.be/cATV_k5cqBc?si=n_cSPsPr1ZC6_vNs"))
             await WorkStates.ready.set()
 
         tmpKwargs = {"chat_id": callback.from_user.id, "bot": bot, "text": "Изучил материал? Все понял, или нужно что-то еще?", "state": WorkStates.is_all_materials_ok, "keyboard": get_is_all_materials_ok_markup(), "timeout": True}

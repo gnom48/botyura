@@ -4,6 +4,7 @@ import random
 # значения по callback.data с ссылками на яндекс диск
 why_bad_str_list = {
     "analytics" : "https://disk.yandex.ru/i/AnAsCJirq9_w2A", 
+    "calls_video" : "https://youtu.be/cATV_k5cqBc?si=n_cSPsPr1ZC6_vNs", 
     "calls" : "https://disk.yandex.ru/i/I2RbitoFIHM80g", 
     "shows" : "https://disk.yandex.ru/i/AoO0qajb78R2iA", 
     "context" : "https://disk.yandex.ru/i/KytgGrnN80GyfQ", 

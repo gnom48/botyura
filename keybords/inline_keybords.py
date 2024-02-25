@@ -66,7 +66,7 @@ def get_bed_result(from_state: State) -> InlineKeyboardButton:
         buttons.append(InlineKeyboardButton("Объект плохой", callback_data="Объект не понравился"))
 
     elif from_state == state_machine.WorkStates.analytics_result or from_state == state_machine.WorkStates.search_result: # аналитика и поиск
-        buttons.append(InlineKeyboardButton("Посмотреть материалы по теме", callback_data="get_materials_analytics"))
+        buttons.append(InlineKeyboardButton("Почитать материалы по теме", callback_data="get_materials_analytics"))
     
     buttons.append(InlineKeyboardButton("Другое", callback_data="other"))
 
