@@ -20,21 +20,18 @@ dp = Dispatcher(bot, storage=storage)
 
 scheduler_list = dict() # словарь структуры { chat_id : { task_id : (kwargs, "занятие") } }
 last_messages = dict()
-scheduler_list = dict()
 
-# запуск 
-async def onStartServer(args) -> None:
-    # запуск утреннего и вечернего оповещения
-    main_scheduler.add_job(func=morning_notifications, trigger=CronTrigger(hour=10-3, minute=0), kwargs={"bot": bot, "dp": dp})
-    main_scheduler.add_job(func=good_evening_notification, trigger=CronTrigger(hour=18-3, minute=30), kwargs={"bot": bot})
+# запуск утреннего и вечернего оповещения
+main_scheduler.add_job(func=morning_notifications, trigger=CronTrigger(hour=10-3, minute=0), kwargs={"bot": bot, "dp": dp})
+main_scheduler.add_job(func=good_evening_notification, trigger=CronTrigger(hour=18-3, minute=30), kwargs={"bot": bot})
 
-    # запуск ежемесячного и еженедельного отчета
-    month_week_scheduler.add_job(func=get_month_statistics, trigger='cron', day='last', hour=10-3, minute=30, kwargs={"bot": bot})
-    month_week_scheduler.add_job(func=get_week_statistics, trigger='cron', day_of_week='mon', hour=10-3, minute=50, kwargs={"bot": bot})
+# запуск ежемесячного и еженедельного отчета
+month_week_scheduler.add_job(func=get_month_statistics, trigger='cron', day='last', hour=10-3, minute=30, kwargs={"bot": bot})
+month_week_scheduler.add_job(func=get_week_statistics, trigger='cron', day_of_week='mon', hour=10-3, minute=50, kwargs={"bot": bot})
 
-    main_scheduler.start()
-    support_scheduler.start()
-    month_week_scheduler.start()
+main_scheduler.start()
+support_scheduler.start()
+month_week_scheduler.start()
 
 
 # команда помощь

@@ -1,1 +1,1 @@
-from .main_handlers import dp, onStartServer
+from .main_handlers import dp

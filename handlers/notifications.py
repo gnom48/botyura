@@ -25,22 +25,22 @@ async def counter_time(chat_id: int, bot: Bot) -> None:
     if time_point > time(18-3, 0) or time_point < time(10-3, 0):
         return
     last_messages[chat_id] = (time_point, True)
-    await asyncio.sleep(120) # 1800 - полчаса
+    await asyncio.sleep(1800) # 1800 - полчаса
     if last_messages[chat_id] == (time_point, True):
         await bot.send_message(chat_id=chat_id, text="Я понимаю, что ты занят, расскажи, пожалуйста, как у тебя дела?")
     else:
         return
     
-    await asyncio.sleep(300) # 3600 - 1 час
+    await asyncio.sleep(3600) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
         await bot.send_message(chat_id=chat_id, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя с делом?")
     else:
         return
     
-    await asyncio.sleep(300) # 3600 - 1 час
+    await asyncio.sleep(3600) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True) and not (dt.now().weekday() == 5 or dt.now().weekday() == 6 or dt.now() in holidays_ru["state_holidays"]):
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} (#{chat_id}) не отвечает на сообщения уже 3 часа!")
-        await bot.send_message(chat_id=chat_id, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} (#{chat_id}) не отвечает на сообщения уже 2.5 часа!")
+        await bot.send_message(chat_id=chat_id, text=f"О нет, вы игнорируете меня уже 2.5 часа к ряду! Я был вынужден сообщить вашему руководителю.")
     else:
         return
 
@@ -52,23 +52,23 @@ async def counter_time_group(chats: list, bot: Bot) -> None:
         return
     for i in chats:
         last_messages[i] = (time_point, True)
-    await asyncio.sleep(120) # 3600 - 1 час
+    await asyncio.sleep(1800) # 3600 - 1 час
     for i in chats:
         if last_messages[i] == (time_point, True):
             await bot.send_message(chat_id=i, text="Я понимаю, что ты занят, расскажи, пожалуйста, как у тебя дела?")
         else:
             continue
-    await asyncio.sleep(300) # 3600 - 1 час
+    await asyncio.sleep(3600) # 3600 - 1 час
     for i in chats:
         if last_messages[i] == (time_point, True):
             await bot.send_message(chat_id=chats, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя с делом?")
         else:
             continue
-    await asyncio.sleep(300) # 3600 - 1 час
+    await asyncio.sleep(3600) # 3600 - 1 час
     for i in chats:
         if last_messages[i] == (time_point, True) and not (dt.now().weekday() == 5 or dt.now().weekday() == 6 or dt.now() in holidays_ru["state_holidays"]):
-            await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chats).fio} (#{chats}) не отвечает на сообщения уже 3 часа!")
-            await bot.send_message(chat_id=chats, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
+            await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chats).fio} (#{chats}) не отвечает на сообщения уже 2.5 часа!")
+            await bot.send_message(chat_id=chats, text=f"О нет, вы игнорируете меня уже 2.5 часа к ряду! Я был вынужден сообщить вашему руководителю.")
         else:
             continue
     
@@ -182,19 +182,21 @@ async def good_evening_notification(bot: Bot):
         # Звонки
         if day_results.cold_call_count < 5:
             calls_praise = "Мало! 😔 Ты должен делать минимум 5 звонков в день. Но не переживай, изучи эти материалы, и сможешь стать еще продуктивнее."
-            vb = InlineKeyboardButton(text='Про звонки 🎥', url=why_bad_str_list[1][1])
-            kb.add(vb)
+            vb1 = InlineKeyboardButton(text='Видео про звонки 🎥', url=why_bad_str_list["calls_video"])
+            vb2 = InlineKeyboardButton(text='Про звонки 📖', url=why_bad_str_list["calls"])
+            kb.add(vb1)
+            kb.add(vb2)
         elif 5 <= day_results.cold_call_count < 10:
             calls_praise = "Молодец! Продолжай в том же духе! 👍"
         else:
             calls_praise = "Ты просто супер! Ты крутой сотрудник! 🥳"
 
         # Расклейка
-        if day_results.posting_adverts < 50:
+        if day_results.posting_adverts < 40:
             stickers_praise = "Плохо! Нужно больше расклеек! 😔 Давай посмотрим видео-материалы про правила расклейки, может быть ты подчерпнешь для себя что-то новое."
-            vb = InlineKeyboardButton(text='Про расклейки 🎥', url=why_bad_str_list[2][1])
+            vb = InlineKeyboardButton(text='Про расклейки 📖', url=why_bad_str_list["commercial"])
             kb.add(vb)
-        elif 50 <= day_results.posting_adverts < 100:
+        elif 40 <= day_results.posting_adverts < 70:
             stickers_praise = "Молодец! Так держать! 👍"
         else:
             stickers_praise = "Супер молодец! Мега продуктивная работа! 🥳"
