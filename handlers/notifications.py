@@ -7,7 +7,7 @@ from keybords import *
 from aiogram.dispatcher.filters.state import State
 from bot import *
 import holidays
-import asyncio
+import asyncio, logging
 from aiogram.dispatcher import Dispatcher
 
 
@@ -25,22 +25,34 @@ async def counter_time(chat_id: int, bot: Bot) -> None:
     if time_point > time(18-3, 0) or time_point < time(10-3, 0):
         return
     last_messages[chat_id] = (time_point, True)
-    await asyncio.sleep(1800) # 1800 - полчаса
+    await asyncio.sleep(3600) # 1800 - полчаса
     if last_messages[chat_id] == (time_point, True):
-        await bot.send_message(chat_id=chat_id, text="Я понимаю, что ты занят, расскажи, пожалуйста, как у тебя дела?")
+        try:
+            await bot.send_message(chat_id=chat_id, text="Я понимаю, что ты занят, расскажи, пожалуйста, как у тебя дела?")
+        except:
+            logging.error(f"unable to chat with [ignore] {chat_id}")
     else:
         return
     
     await asyncio.sleep(3600) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True):
-        await bot.send_message(chat_id=chat_id, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя с делом?")
+        try:
+            await bot.send_message(chat_id=chat_id, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя с делом?")
+        except:
+            logging.error(f"unable to chat with [ignore] {chat_id}")
+
     else:
         return
     
     await asyncio.sleep(3600) # 3600 - 1 час
     if last_messages[chat_id] == (time_point, True) and not (dt.now().weekday() == 5 or dt.now().weekday() == 6 or dt.now() in holidays_ru["state_holidays"]):
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} (#{chat_id}) не отвечает на сообщения уже 2.5 часа!")
-        await bot.send_message(chat_id=chat_id, text=f"О нет, вы игнорируете меня уже 2.5 часа к ряду! Я был вынужден сообщить вашему руководителю.")
+        try:
+            await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} (#{chat_id}) не отвечает на сообщения уже 3 часа!")
+            await bot.send_message(chat_id=chat_id, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
+        except:
+            await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat_id).fio} (#{chat_id}) недоступен для отправки сообщений!")
+            logging.error(f"unable to chat with [ignore] {chat_id}")
+
     else:
         return
 
@@ -50,25 +62,36 @@ async def counter_time_group(chats: list, bot: Bot) -> None:
     time_point = dt.now().time()
     if time_point > time(18-3, 0) or time_point < time(10-3, 0):
         return
-    for i in chats:
-        last_messages[i] = (time_point, True)
-    await asyncio.sleep(1800) # 3600 - 1 час
-    for i in chats:
-        if last_messages[i] == (time_point, True):
-            await bot.send_message(chat_id=i, text="Я понимаю, что ты занят, расскажи, пожалуйста, как у тебя дела?")
+    for chat in chats:
+        last_messages[chat] = (time_point, True)
+    await asyncio.sleep(3600) # 3600 - 1 час
+    for chat in chats:
+        if last_messages[chat] == (time_point, True):
+            try:
+                await bot.send_message(chat_id=chat, text="Я понимаю, что ты занят, расскажи, пожалуйста, как у тебя дела?")
+            except:
+                pass
         else:
             continue
     await asyncio.sleep(3600) # 3600 - 1 час
-    for i in chats:
-        if last_messages[i] == (time_point, True):
-            await bot.send_message(chat_id=chats, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя с делом?")
+    for chat in chats:
+        if last_messages[chat] == (time_point, True):
+            try:
+                await bot.send_message(chat_id=chats, text="Я понимаю, что ты очень сильно занят, но напиши, пожалуйста, как у тебя с делом?")
+            except:
+                pass
         else:
             continue
     await asyncio.sleep(3600) # 3600 - 1 час
-    for i in chats:
-        if last_messages[i] == (time_point, True) and not (dt.now().weekday() == 5 or dt.now().weekday() == 6 or dt.now() in holidays_ru["state_holidays"]):
-            await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chats).fio} (#{chats}) не отвечает на сообщения уже 2.5 часа!")
-            await bot.send_message(chat_id=chats, text=f"О нет, вы игнорируете меня уже 2.5 часа к ряду! Я был вынужден сообщить вашему руководителю.")
+    for chat in chats:
+        if last_messages[chat] == (time_point, True) and not (dt.now().weekday() == 5 or dt.now().weekday() == 6 or dt.now() in holidays_ru["state_holidays"]):
+            try:
+                await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat).fio} (#{chat}) не отвечает на сообщения уже 3 часа!")
+                await bot.send_message(chat_id=chat, text=f"О нет, вы игнорируете меня уже 3 часа к ряду! Я был вынужден сообщить вашему руководителю.")
+            except:
+                await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {Rielter.get_or_none(Rielter.rielter_id == chat).fio} (#{chat}) недоступен для отправки сообщений!")
+                logging.error(f"unable to chat with [group_ignore] {chat}")
+
         else:
             continue
     
@@ -94,7 +117,8 @@ async def morning_notifications(bot: Bot, dp: Dispatcher):
                 await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Поздравляем с днем рождения сотрудника {rielter.fio}")
                 await bot.send_message(chat_id=rielter.rielter_id, text=f"От наших коллег, руководителей и от себя, поздравляю тебя с днем рождения! 🎉 Желаю вам океан счастья, гору улыбок и сверкающих моментов в этот особенный день! 🎂❤️")
         except:
-            pass
+            logging.error(f"unable to chat with [morning] {rielter.rielter_id}")
+
 
     holidays_ru["state_holidays"] = holidays.Russia(years=dt.now().year)
     for rielter in Rielter.select():
@@ -103,51 +127,56 @@ async def morning_notifications(bot: Bot, dp: Dispatcher):
     reports = Report.select()
     chats = []
     for tmp in reports:
-        chats.append(tmp.rielter_id)
-        
-        # tmp.cold_call_count = 0
-        # tmp.meet_new_objects = 0
-        # tmp.take_in_work = 0
-        # tmp.contrects_signed = 0
-        # tmp.show_objects = 0
-        # tmp.posting_adverts = 0
-        # tmp.ready_deposit_count = 0
-        # tmp.take_deposit_count = 0
-        # tmp.deals_count = 0
-        # tmp.analytics = 0
-        # tmp.bad_seller_count = 0
-        # tmp.bad_object_count = 0
-        # tmp.save()
+        try:
+            chats.append(tmp.rielter_id)
+            
+            # tmp.cold_call_count = 0
+            # tmp.meet_new_objects = 0
+            # tmp.take_in_work = 0
+            # tmp.contrects_signed = 0
+            # tmp.show_objects = 0
+            # tmp.posting_adverts = 0
+            # tmp.ready_deposit_count = 0
+            # tmp.take_deposit_count = 0
+            # tmp.deals_count = 0
+            # tmp.analytics = 0
+            # tmp.bad_seller_count = 0
+            # tmp.bad_object_count = 0
+            # tmp.save()
 
-        # напоминания на день
-        task_list: list = Task.select().where(Task.rielter_id == tmp.rielter_id)
-        tasks_str = ""
-        if len(task_list) != 0:
-            tasks_str = f"Напоминаю, что на сегодня ты запланировал:\n\n"
-            for task in task_list:
-                if tmp.rielter_id == task.rielter_id and dt.strptime(task.date_planed, '%d-%m-%Y').date() == dt.now().date():
-                    tasks_str = tasks_str + f" - {task.task_name}\n\n"
-                    time_obj: dt
-                    try:
-                        time_obj = dt.strptime(str(task.time_planed), '%H:%M:%S').time()
-                    except:
-                        continue
-                    dt_tmp = dt(year=dt.now().year, month=dt.now().month, day=dt.now().day, hour=time_obj.hour, minute=time_obj.minute, second=0)
-                    tmpKwargs = {"chat_id": tmp.rielter_id, "bot": bot, "text": f"Напоминаю, что ты запланировал в {task.time_planed} заняться: {task.task_name}", "state": None, "keyboard": None, "timeout": False}
-                    support_scheduler.add_job(send_notification, trigger="date", run_date=(dt_tmp - timedelta(hours=3, seconds=10)), kwargs=tmpKwargs)
-                    Task.delete().where(Task.id == task.id).execute()
-            await bot.send_message(chat_id=tmp.rielter_id, text=tasks_str)
+            # напоминания на день
+            task_list: list = Task.select().where(Task.rielter_id == tmp.rielter_id)
+            tasks_str = ""
+            if len(task_list) != 0:
+                tasks_str = f"Напоминаю, что на сегодня ты запланировал:\n\n"
+                for task in task_list:
+                    if tmp.rielter_id == task.rielter_id and dt.strptime(task.date_planed, '%d-%m-%Y').date() == dt.now().date():
+                        tasks_str = tasks_str + f" - {task.task_name}\n\n"
+                        time_obj: dt
+                        try:
+                            time_obj = dt.strptime(str(task.time_planed), '%H:%M:%S').time()
+                        except:
+                            continue
+                        dt_tmp = dt(year=dt.now().year, month=dt.now().month, day=dt.now().day, hour=time_obj.hour, minute=time_obj.minute, second=0)
+                        tmpKwargs = {"chat_id": tmp.rielter_id, "bot": bot, "text": f"Напоминаю, что ты запланировал в {task.time_planed} заняться: {task.task_name}", "state": None, "keyboard": None, "timeout": False}
+                        support_scheduler.add_job(send_notification, trigger="date", run_date=(dt_tmp - timedelta(hours=3, seconds=10)), kwargs=tmpKwargs)
+                        Task.delete().where(Task.id == task.id).execute()
+                await bot.send_message(chat_id=tmp.rielter_id, text=tasks_str)
 
-        if dt.now().weekday() == 5 or dt.now().weekday() == 6 or dt.now() in holidays_ru["state_holidays"]:
-            if dt.now() in holidays_ru['state_holidays']:
-                await bot.send_message(chat_id=tmp.rielter_id, text=f"Поздравляю с праздником! Сегодня - {holidays_ru['state_holidays'][dt.now()]}")
-            return
+            if dt.now().weekday() == 5 or dt.now().weekday() == 6 or dt.now() in holidays_ru["state_holidays"]:
+                if dt.now() in holidays_ru['state_holidays']:
+                    await bot.send_message(chat_id=tmp.rielter_id, text=f"Поздравляю с праздником! Сегодня - {holidays_ru['state_holidays'][dt.now()]}")
+                return
 
-        last_messages[tmp.rielter_id] = (dt.now().time(), True)
-        await bot.send_message(chat_id=tmp.rielter_id, text=get_day_plan(Rielter.get_by_id(pk=tmp.rielter_id).rielter_type_id))
+            last_messages[tmp.rielter_id] = (dt.now().time(), True)
+            await bot.send_message(chat_id=tmp.rielter_id, text=get_day_plan(Rielter.get_by_id(pk=tmp.rielter_id).rielter_type_id))
 
-        await bot.send_message(chat_id=tmp.rielter_id, text=generate_main_menu_text(), reply_markup=get_inline_menu_markup())
-        await dp.storage.set_state(user=tmp.rielter_id, state=WorkStates.ready)
+            await bot.send_message(chat_id=tmp.rielter_id, text=generate_main_menu_text(), reply_markup=get_inline_menu_markup())
+            await dp.storage.set_state(user=tmp.rielter_id, state=WorkStates.ready)
+
+        except:
+            logging.error(f"unable to chat with [morning] {tmp.rielter_id}")
+
     await counter_time_group(chats=chats, bot=bot)
 
 
@@ -207,9 +236,13 @@ async def good_evening_notification(bot: Bot):
         worker = Rielter.get_by_id(pk=day_results.rielter_id)
 
         if not flag:
-            await bot.send_message(chat_id=day_results.rielter_id, text=f"Доброе вечер! Жаль, но пора заканчивать рабочий день. \n\nДавай посмотрим, как ты потрудился сегодня:") #\n{day_results_str}")
-            await bot.send_message(chat_id=day_results.rielter_id, text=f"{praise_sentence}", reply_markup=kb)
-            await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {worker.fio} (#{day_results.rielter_id}) завершил рабочий день. \nОтчет: \n{day_results_str}")
+            try:
+                await bot.send_message(chat_id=day_results.rielter_id, text=f"Доброе вечер! Жаль, но пора заканчивать рабочий день. \n\nДавай посмотрим, как ты потрудился сегодня:") #\n{day_results_str}")
+                await bot.send_message(chat_id=day_results.rielter_id, text=f"{praise_sentence}", reply_markup=kb)
+                await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Сотрудник {worker.fio} (#{day_results.rielter_id}) завершил рабочий день. \nОтчет: \n{day_results_str}")
+            except:
+                logging.error(f"unable to chat with [evening] {day_results.rielter_id}")
+
 
         week_result = WeekReport.get_or_none(WeekReport.rielter_id == day_results.rielter_id)
         if week_result:
@@ -271,7 +304,10 @@ async def get_week_statistics(bot: Bot):
             + f"\nзавершено сделок: {results.deals_count}\n" \
             + f"\nнарвался на плохих продавцов / клиентов: {results.bad_seller_count}" \
             + f"\nнарвался на плохие объекты: {results.bad_object_count}"
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=results_str)
+        try:
+            await bot.send_message(chat_id=ADMIN_CHAT_ID, text=results_str)
+        except:
+                logging.error(f"unable to chat with [stat week] {results.rielter_id}")
 
         results.cold_call_count = 0
         results.meet_new_objects = 0
@@ -316,7 +352,10 @@ async def get_month_statistics(bot: Bot):
             + f"\nзавершено сделок: {results.deals_count}\n" \
             + f"\nнарвался на плохих продавцов / клиентов: {results.bad_seller_count}" \
             + f"\nнарвался на плохие объекты: {results.bad_object_count}"
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=results_str)
+        try:
+            await bot.send_message(chat_id=ADMIN_CHAT_ID, text=results_str)
+        except:
+            logging.error(f"unable to chat with [morning] {results.rielter_id}")
 
         results.cold_call_count = 0
         results.meet_new_objects = 0
